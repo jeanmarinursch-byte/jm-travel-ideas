@@ -2620,8 +2620,9 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
     const btn = document.getElementById('av-btn');
     const status = document.getElementById('av-status');
     btn.disabled = true;
-    status.textContent = '⏳ Fetching and analyzing…';
+    status.textContent = '';
     document.getElementById('av-result').classList.remove('visible');
+    startProgress(1);
 
     try {
       const res = await fetch('/api/analyze', {
@@ -2632,6 +2633,7 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
       const data = await res.json();
 
       if (data.error) {
+        finishProgress(false);
         const noMeta = ['no_metadata', 'url_blocked', 'url_unreachable', 'no_travel_info'].includes(data.error);
         status.innerHTML = `⚠️ ${data.message || data.error}${noMeta ? ' <span style="color:var(--copper);cursor:pointer;text-decoration:underline" onclick="document.getElementById(\'av-file\').click()">Upload screenshot →</span>' : ''}`;
         btn.disabled = false;
@@ -2650,13 +2652,15 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
           return true;
         });
         const container = document.getElementById('av-multi-results');
-        renderChecklist(deduped, container, status, btn, null);
+        renderChecklist(deduped, container, status, btn, finishProgress);
         return;
       }
 
+      finishProgress(false);
       status.textContent = '❌ Unexpected response. Please try again.';
       btn.disabled = false;
     } catch (e) {
+      finishProgress(false);
       status.textContent = '❌ Request failed. Check your connection and try again.';
       btn.disabled = false;
     }
