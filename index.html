@@ -2477,10 +2477,39 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
   }
 
   // ── Analyze image(s) ─────────────────────────────────────────────────────
+  function _guestUploadKey() {
+    return _session && _session.role === 'guest' ? `jm_guest_uploads_${_session.email}` : null;
+  }
+  function _guestUploadCount() {
+    const key = _guestUploadKey();
+    return key ? parseInt(localStorage.getItem(key) || '0', 10) : 0;
+  }
+  function _guestUploadIncrement(n) {
+    const key = _guestUploadKey();
+    if (key) localStorage.setItem(key, _guestUploadCount() + n);
+  }
+
+  const GUEST_UPLOAD_LIMIT = 50;
+
   async function analyzeImage() {
     if (!_images.length) return;
     const btn = document.getElementById('av-img-btn');
     const status = document.getElementById('av-status');
+
+    // Check guest upload limit before sending to API
+    if (_session && _session.role === 'guest') {
+      const used = _guestUploadCount();
+      const remaining = GUEST_UPLOAD_LIMIT - used;
+      if (remaining <= 0) {
+        status.textContent = '⚠️ You have reached the maximum of 50 screenshots. Contact JM for more access.';
+        return;
+      }
+      if (_images.length > remaining) {
+        status.textContent = `⚠️ You can only upload ${remaining} more screenshot${remaining !== 1 ? 's' : ''} (limit: 50 total).`;
+        return;
+      }
+    }
+
     btn.disabled = true;
     const n = _images.length;
     status.textContent = '';
@@ -2531,6 +2560,8 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
         btn.disabled = false;
         return;
       }
+      // Count screenshots used against guest quota (only on success)
+      _guestUploadIncrement(n);
       const container = document.getElementById('av-multi-results');
       renderChecklist(filtered, container, status, btn, finishProgress);
     } catch (e) {
