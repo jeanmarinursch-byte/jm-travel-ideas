@@ -37,13 +37,14 @@ Categories: ${CATEGORIES}
 
 Each item in the array:
 {
-  "name": "specific place name or activity",
+  "name": "place name, landmark, or activity — include descriptive activities like 'Explore the Old Town', 'Night market visit', 'Sunrise hike' if no specific name is given",
   "country": "from known list or null",
   "city": "city or district or null",
   "category": "Food|Drink|Culture|Activities|Shopping|Miscellaneous",
   "details": "one concise sentence combining all relevant info"
 }
 
+Capture everything that could be a useful travel reminder — named venues, landmarks, AND descriptive experiences.
 If no travel info found, return: []`;
 
     const imageBlocks = imageList.map(img => ({
