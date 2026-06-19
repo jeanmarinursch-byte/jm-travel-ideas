@@ -1000,6 +1000,28 @@ function mergeUserEntries() {
   getUserEntries().forEach(item => _insertIntoTravel(item));
 }
 
+function deduplicateTravel() {
+  const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  Object.values(TRAVEL).forEach(country => {
+    country.cities.forEach(city => {
+      Object.keys(city.categories).forEach(cat => {
+        const seen = {};
+        city.categories[cat] = city.categories[cat].filter(entry => {
+          const key = norm(entry.name);
+          if (seen[key]) {
+            if (entry.details && entry.details !== seen[key].details) {
+              seen[key].details = [seen[key].details, entry.details].filter(Boolean).join(' · ');
+            }
+            return false;
+          }
+          seen[key] = entry;
+          return true;
+        });
+      });
+    });
+  });
+}
+
 function checkPassword() {
   const val = document.getElementById('pw-input').value;
   const err = document.getElementById('pw-error');
@@ -1008,6 +1030,7 @@ function checkPassword() {
     document.getElementById('pw-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     mergeUserEntries();
+    deduplicateTravel();
     buildHome();
   } else {
     err.textContent = 'Incorrect password';
