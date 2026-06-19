@@ -2175,19 +2175,19 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
   <div class="av-overlay" id="av-overlay" onclick="e => { if(e.target===this) closeAddVideo(); }">
     <div class="av-modal">
       <button class="av-close-btn" onclick="closeAddVideo()">✕</button>
-      <div class="av-modal-title">📱 Add from Instagram / TikTok</div>
-
-      <div class="av-input-row">
-        <input class="av-url-input" id="av-url" type="url"
-          placeholder="Paste reel or video URL here…"
-          onkeydown="if(event.key==='Enter') analyzeVideo()" />
-        <button class="av-analyze-btn" id="av-btn" onclick="analyzeVideo()">Analyze</button>
-      </div>
-
-      <div class="av-divider">or</div>
+      <div class="av-modal-title">✈️ Add Travel Inspiration</div>
 
       <input type="file" id="av-file" accept="image/*" multiple style="display:none" onchange="onImagesSelected(event)" />
       <button class="av-upload-btn" onclick="document.getElementById('av-file').click()">📷 Upload screenshots (up to 10)</button>
+
+      <div class="av-divider">or paste a link</div>
+
+      <div class="av-input-row">
+        <input class="av-url-input" id="av-url" type="url"
+          placeholder="Blog, article, Instagram, TikTok…"
+          onkeydown="if(event.key==='Enter') analyzeVideo()" />
+        <button class="av-analyze-btn" id="av-btn" onclick="analyzeVideo()">Analyze</button>
+      </div>
 
       <div style="margin-top:0.9rem">
         <div class="av-previews" id="av-previews"></div>
