@@ -1069,18 +1069,8 @@ async function syncEntriesFromServer(isAdmin) {
     const data = await res.json();
     const serverEntries = data.entries || [];
     const localEntries = getUserEntries();
-    const localNames = new Set(localEntries.map(e => e.name?.toLowerCase().trim()));
 
-    // Pull: merge any server entries not in local
-    const newFromServer = serverEntries.filter(e => !localNames.has(e.name?.toLowerCase().trim()));
-    if (newFromServer.length > 0) {
-      const merged = [...localEntries, ...newFromServer];
-      localStorage.setItem(USER_ENTRIES_KEY, JSON.stringify(merged));
-      newFromServer.forEach(item => _insertIntoTravel(item));
-      buildHome();
-    }
-
-    // Push: if admin, upload any local entries not yet on server
+    // Push: if admin, upload any local entries not yet on server (first-time bootstrap)
     if (isAdmin && localEntries.length > 0) {
       const serverNames = new Set(serverEntries.map(e => e.name?.toLowerCase().trim()));
       const newFromLocal = localEntries.filter(e => !serverNames.has(e.name?.toLowerCase().trim()));
@@ -1091,6 +1081,23 @@ async function syncEntriesFromServer(isAdmin) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ entries: allEntries })
         }).catch(() => {});
+        // Update local to match what we just pushed
+        localStorage.setItem(USER_ENTRIES_KEY, JSON.stringify(allEntries));
+        newFromLocal.forEach(item => _insertIntoTravel(item));
+        buildHome();
+        return;
+      }
+    }
+
+    // Pull: server is the source of truth — replace local with server entries
+    if (serverEntries.length > 0) {
+      localStorage.setItem(USER_ENTRIES_KEY, JSON.stringify(serverEntries));
+      // Insert any server entries not already in TRAVEL (from the hardcoded base)
+      const localNames = new Set(localEntries.map(e => e.name?.toLowerCase().trim()));
+      const newFromServer = serverEntries.filter(e => !localNames.has(e.name?.toLowerCase().trim()));
+      if (newFromServer.length > 0) {
+        newFromServer.forEach(item => _insertIntoTravel(item));
+        buildHome();
       }
     }
   } catch (_) {}
