@@ -82,12 +82,50 @@ If no travel info found, return: []`;
       const claudeData = await claude.json();
       const raw = claudeData.content?.[0]?.text || '[]';
       const match = raw.match(/\[[\s\S]*\]/);
+      let results;
       try {
-        const results = JSON.parse(match?.[0] || '[]');
-        return res.status(200).json({ results });
+        results = JSON.parse(match?.[0] || '[]');
       } catch {
         return res.status(500).json({ error: 'Analysis failed', detail: 'JSON parse error', raw });
       }
+
+      // ── Semantic deduplication pass ───────────────────────────────────────
+      if (results.length > 1) {
+        const DEDUP_SYSTEM = `You are a travel data deduplicator.
+You will receive a JSON array of travel places. Some entries may refer to the same physical place but be described differently (e.g. "Mount Phousi Sunset Viewpoint" and "Hike Phousi Hill" are the same place).
+Merge any entries that refer to the same physical location or experience into a single entry with:
+- The most descriptive name
+- Combined details from all merged entries (one concise sentence)
+- The correct category, country, city
+Return ONLY the deduplicated JSON array — no markdown, no explanation.`;
+
+        try {
+          const dedup = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'x-api-key': apiKey,
+              'anthropic-version': '2023-06-01',
+              'content-type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: 'claude-haiku-4-5-20251001',
+              max_tokens: 2000,
+              system: DEDUP_SYSTEM,
+              messages: [{ role: 'user', content: JSON.stringify(results) }]
+            })
+          });
+          if (dedup.ok) {
+            const dedupData = await dedup.json();
+            const dedupRaw = dedupData.content?.[0]?.text || '[]';
+            const dedupMatch = dedupRaw.match(/\[[\s\S]*\]/);
+            if (dedupMatch) {
+              try { results = JSON.parse(dedupMatch[0]); } catch (_) {}
+            }
+          }
+        } catch (_) {}
+      }
+
+      return res.status(200).json({ results });
     } catch (e) {
       return res.status(500).json({ error: 'Analysis failed', detail: e.message });
     }
