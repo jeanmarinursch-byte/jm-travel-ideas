@@ -30,10 +30,10 @@ Known countries: ${COUNTRIES}
 Categories: ${CATEGORIES}
   Food – restaurants, cafes, food markets, bakeries, street food
   Drink – bars, coffee shops, rooftop bars, cocktail spots
-  Culture – museums, temples, monuments, architecture, historical sites, galleries
-  Activities – hiking, beaches, nature, sports, wellness, tours, day trips
+  Culture – museums, temples, monuments, architecture, historical sites, galleries, religious sites
+  Activities – hiking, beaches, nature, sports, wellness, tours, day trips, wildlife sanctuaries, animal experiences, rescue centres, national parks, waterfalls, viewpoints, boat trips
   Shopping – boutiques, markets, department stores, souvenirs
-  Miscellaneous – anything else
+  Miscellaneous – anything else travel-related that doesn't fit above
 
 Each item in the array:
 {
