@@ -5,19 +5,26 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { url, image, mediaType } = req.body || {};
-  if (!url && !image) return res.status(400).json({ error: 'URL or image required' });
+  const { url, image, mediaType, images } = req.body || {};
+  if (!url && !image && !images) return res.status(400).json({ error: 'URL or image required' });
 
   const apiKey = process.env.ANTHROPIC_API_KEY || '';
 
   const CATEGORIES = `Food, Drink, Culture, Activities, Shopping, Miscellaneous`;
   const COUNTRIES = `Albania, Argentina, Bolivia, Chile, China, Hong Kong, Hungary, India, Indonesia, Italy, Japan, Kyrgyzstan, Laos, Malaysia, Mexico, Morocco, New York, Norway, Peru, Poland, Portugal, Slovenia, South Korea, Spain, Taiwan, Tajikistan, Thailand, USA, Uzbekistan`;
 
-  // ── IMAGE PATH ────────────────────────────────────────────────────────────
-  if (image) {
+  // ── IMAGE PATH (single or multiple) ──────────────────────────────────────
+  const imageList = images || (image ? [{ data: image, mediaType: mediaType || 'image/jpeg' }] : null);
+
+  if (imageList) {
+    if (imageList.length > 20) {
+      return res.status(400).json({ error: 'too_many_images', message: 'Maximum 20 screenshots per batch.' });
+    }
+
     const SYSTEM = `You extract travel inspiration from screenshots of social media posts (Instagram, TikTok, etc).
+You will receive one or more screenshots. Extract ALL distinct places, activities, restaurants, or experiences across ALL images.
+Merge duplicate entries — if the same place appears in multiple screenshots, combine their details into one entry with the most complete information.
 Return ONLY a valid JSON array — no markdown fences, no explanation.
-Extract ALL distinct places, activities, restaurants, or experiences visible in the image.
 
 Known countries: ${COUNTRIES}
 Categories: ${CATEGORIES}
@@ -34,10 +41,15 @@ Each item in the array:
   "country": "from known list or null",
   "city": "city or district or null",
   "category": "Food|Drink|Culture|Activities|Shopping|Miscellaneous",
-  "details": "one concise sentence"
+  "details": "one concise sentence combining all relevant info"
 }
 
 If no travel info found, return: []`;
+
+    const imageBlocks = imageList.map(img => ({
+      type: 'image',
+      source: { type: 'base64', media_type: img.mediaType || 'image/jpeg', data: img.data }
+    }));
 
     try {
       const claude = await fetch('https://api.anthropic.com/v1/messages', {
@@ -49,13 +61,13 @@ If no travel info found, return: []`;
         },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 1500,
+          max_tokens: 2000,
           system: SYSTEM,
           messages: [{
             role: 'user',
             content: [
-              { type: 'image', source: { type: 'base64', media_type: mediaType || 'image/jpeg', data: image } },
-              { type: 'text', text: 'Extract all travel places and activities from this screenshot.' }
+              ...imageBlocks,
+              { type: 'text', text: `Extract and merge all travel places and activities from these ${imageList.length} screenshot${imageList.length > 1 ? 's' : ''}.` }
             ]
           }]
         })
