@@ -1050,10 +1050,36 @@ function persistUserEntry(item) {
   const entries = getUserEntries();
   entries.push(item);
   localStorage.setItem(USER_ENTRIES_KEY, JSON.stringify(entries));
+  // Sync to server in background
+  fetch('/api/entries-put', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ entries: getUserEntries() })
+  }).catch(() => {});
 }
 
 function mergeUserEntries() {
   getUserEntries().forEach(item => _insertIntoTravel(item));
+}
+
+async function syncEntriesFromServer() {
+  try {
+    const res = await fetch('/api/entries-get');
+    if (!res.ok) return;
+    const data = await res.json();
+    const serverEntries = data.entries || [];
+    if (serverEntries.length === 0) return;
+    // Merge server entries into localStorage and TRAVEL
+    const localEntries = getUserEntries();
+    const localNames = new Set(localEntries.map(e => e.name?.toLowerCase().trim()));
+    const newEntries = serverEntries.filter(e => !localNames.has(e.name?.toLowerCase().trim()));
+    if (newEntries.length > 0) {
+      const merged = [...localEntries, ...newEntries];
+      localStorage.setItem(USER_ENTRIES_KEY, JSON.stringify(merged));
+      newEntries.forEach(item => _insertIntoTravel(item));
+      buildHome();
+    }
+  } catch (_) {}
 }
 
 function migrateInbox() {
@@ -1109,10 +1135,11 @@ async function checkPassword() {
       document.getElementById('app').style.display = 'block';
       if (data.role === 'admin') {
         migrateInbox();
-        mergeUserEntries();
         deduplicateTravel();
       }
+      mergeUserEntries();
       showHome();
+      syncEntriesFromServer();
     } else {
       err.textContent = data.message || 'Incorrect password';
       inp.classList.remove('shake');
