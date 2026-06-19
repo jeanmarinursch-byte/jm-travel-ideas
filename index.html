@@ -803,6 +803,22 @@
   .av-preview-count {
     font-size: 0.72rem; color: var(--text3); margin-bottom: 0.5rem;
   }
+  .av-progress-wrap {
+    display: none; margin-bottom: 0.7rem;
+  }
+  .av-progress-wrap.visible { display: block; }
+  .av-progress-label {
+    font-size: 0.72rem; color: var(--text2); margin-bottom: 0.35rem;
+    display: flex; justify-content: space-between;
+  }
+  .av-progress-bar {
+    height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden;
+  }
+  .av-progress-fill {
+    height: 100%; background: var(--copper);
+    border-radius: 2px; width: 0%;
+    transition: width 0.4s ease;
+  }
   .av-multi-results { display: none; margin-bottom: 1rem; }
   .av-multi-results.visible { display: block; }
   .av-multi-item {
@@ -2078,6 +2094,13 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
         <div class="av-previews" id="av-previews"></div>
         <div class="av-preview-count" id="av-preview-count"></div>
         <button class="av-analyze-btn" id="av-img-btn" style="display:none;width:100%;margin-bottom:0.7rem" onclick="analyzeImage()">Analyze Screenshots</button>
+        <div class="av-progress-wrap" id="av-progress-wrap">
+          <div class="av-progress-label">
+            <span id="av-progress-label">Analyzing…</span>
+            <span id="av-progress-pct">0%</span>
+          </div>
+          <div class="av-progress-bar"><div class="av-progress-fill" id="av-progress-fill"></div></div>
+        </div>
       </div>
 
       <div class="av-status" id="av-status"></div>
@@ -2185,6 +2208,9 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
     document.getElementById('av-previews').innerHTML = '';
     document.getElementById('av-preview-count').textContent = '';
     document.getElementById('av-file').value = '';
+    document.getElementById('av-progress-wrap').classList.remove('visible');
+    document.getElementById('av-progress-fill').style.width = '0%';
+    clearInterval(_progressTimer);
     _images = [];
   }
 
@@ -2248,6 +2274,45 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
     document.getElementById('av-img-btn').style.display = 'block';
   }
 
+  // ── Progress bar helpers ──────────────────────────────────────────────────
+  let _progressTimer = null;
+
+  function startProgress(n) {
+    const wrap  = document.getElementById('av-progress-wrap');
+    const fill  = document.getElementById('av-progress-fill');
+    const label = document.getElementById('av-progress-label');
+    const pct   = document.getElementById('av-progress-pct');
+    wrap.classList.add('visible');
+    fill.style.width = '0%';
+
+    const steps = [
+      { p: 10, text: `Uploading ${n} screenshot${n > 1 ? 's' : ''}…` },
+      { p: 30, text: 'Reading images…' },
+      { p: 55, text: 'Extracting places…' },
+      { p: 75, text: 'Merging duplicates…' },
+      { p: 90, text: 'Almost done…' },
+    ];
+    let i = 0;
+    _progressTimer = setInterval(() => {
+      if (i >= steps.length) { clearInterval(_progressTimer); return; }
+      fill.style.width = steps[i].p + '%';
+      label.textContent = steps[i].text;
+      pct.textContent = steps[i].p + '%';
+      i++;
+    }, 800);
+  }
+
+  function finishProgress(success) {
+    clearInterval(_progressTimer);
+    const fill  = document.getElementById('av-progress-fill');
+    const label = document.getElementById('av-progress-label');
+    const pct   = document.getElementById('av-progress-pct');
+    fill.style.width = success ? '100%' : '0%';
+    label.textContent = success ? 'Done!' : '';
+    pct.textContent   = success ? '100%' : '';
+    if (!success) document.getElementById('av-progress-wrap').classList.remove('visible');
+  }
+
   // ── Analyze image(s) ─────────────────────────────────────────────────────
   async function analyzeImage() {
     if (!_images.length) return;
@@ -2255,8 +2320,9 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
     const status = document.getElementById('av-status');
     btn.disabled = true;
     const n = _images.length;
-    status.textContent = `⏳ Analyzing ${n} screenshot${n > 1 ? 's' : ''} and merging results…`;
+    status.textContent = '';
     document.getElementById('av-multi-results').classList.remove('visible');
+    startProgress(n);
 
     try {
       const res = await fetch('/api/analyze', {
@@ -2266,11 +2332,12 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
       });
       const data = await res.json();
 
-      if (data.error) { status.textContent = `⚠️ ${data.error}`; btn.disabled = false; return; }
+      if (data.error) { finishProgress(false); status.textContent = `⚠️ ${data.message || data.error}`; btn.disabled = false; return; }
 
       const results = data.results || [];
       if (results.length === 0) {
-        status.textContent = '⚠️ No travel info found in this screenshot.';
+        finishProgress(false);
+        status.textContent = '⚠️ No travel info found in these screenshots.';
         btn.disabled = false;
         return;
       }
@@ -2290,9 +2357,11 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
           <button class="av-save-all-btn" onclick="saveAllToTravel(${JSON.stringify(results).replace(/"/g, '&quot;')})">Save Selected</button>
         </div>`;
       container.classList.add('visible');
+      finishProgress(true);
       status.textContent = `✅ Found ${results.length} place${results.length > 1 ? 's' : ''} — review and save.`;
       btn.disabled = false;
     } catch (e) {
+      finishProgress(false);
       status.textContent = '❌ Request failed. Check your connection and try again.';
       btn.disabled = false;
     }
