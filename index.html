@@ -1143,11 +1143,19 @@ function showView(id) {
   window.scrollTo(0, 0);
 }
 
+function _updateAddBtn(show) {
+  const btn = document.querySelector('.add-video-btn');
+  if (btn) btn.style.display = show ? '' : 'none';
+}
+
 function showHome() {
   history = [];
   setHeader('Bon Vent <span>by JM</span>', false, false);
   buildHome();
   showView('view-home');
+  // Hide + button for guests on home — they can only add from inside a country
+  const isGuest = _session && _session.role === 'guest';
+  _updateAddBtn(!isGuest);
 }
 
 function goBack() {
@@ -1454,6 +1462,9 @@ async function getWorldTopo() {
 // ── COUNTRY VIEW ──
 function showCountry(country) {
   currentCountry = country;
+  const isGuest = _session && _session.role === 'guest';
+  const entitled = isGuest ? (_session.countries || []) : null;
+  _updateAddBtn(!isGuest || (entitled && entitled.includes(country)));
   const d = TRAVEL[country];
   const n = countryEntries(country);
 
