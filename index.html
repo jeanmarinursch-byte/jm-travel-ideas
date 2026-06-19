@@ -1435,7 +1435,7 @@ function showCountry(country) {
   document.getElementById('c-flag-left').textContent = d.flag;
   document.getElementById('c-flag-right').textContent = d.flag;
   document.getElementById('c-name').textContent = country;
-  document.getElementById('c-subtitle').textContent = `(${n} place${n!==1?'s':''})`;
+  document.getElementById('c-subtitle').textContent = '';
   setHeader('', true, true);
 
   const isHome = PRIORITY.includes(country);
