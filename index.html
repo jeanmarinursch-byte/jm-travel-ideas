@@ -1000,6 +1000,17 @@ function mergeUserEntries() {
   getUserEntries().forEach(item => _insertIntoTravel(item));
 }
 
+function migrateInbox() {
+  const INBOX_KEY = 'jm_travel_inbox';
+  try {
+    const items = JSON.parse(localStorage.getItem(INBOX_KEY) || '[]');
+    if (items.length > 0) {
+      items.forEach(item => _insertIntoTravel(item));
+      localStorage.removeItem(INBOX_KEY);
+    }
+  } catch (_) {}
+}
+
 function deduplicateTravel() {
   const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   Object.values(TRAVEL).forEach(country => {
@@ -1029,6 +1040,7 @@ function checkPassword() {
   if (val === PASSWORD) {
     document.getElementById('pw-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
+    migrateInbox();
     mergeUserEntries();
     deduplicateTravel();
     buildHome();
