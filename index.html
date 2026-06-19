@@ -2092,7 +2092,7 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
         <div class="av-confidence" id="av-confidence"></div>
         <div class="av-actions">
           <button class="av-cancel-btn" onclick="resetAnalysis()">Clear</button>
-          <button class="av-save-btn" onclick="saveToInbox()">Save to Inbox</button>
+          <button class="av-save-btn" onclick="saveToTravel()">Save to List</button>
         </div>
       </div>
     </div>
@@ -2222,7 +2222,7 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
         </div>`).join('') +
         `<div class="av-actions" style="margin-top:0.8rem">
           <button class="av-cancel-btn" onclick="resetAnalysis()">Clear</button>
-          <button class="av-save-all-btn" onclick="saveAllToInbox(${JSON.stringify(results).replace(/"/g, '&quot;')})">Save Selected</button>
+          <button class="av-save-all-btn" onclick="saveAllToTravel(${JSON.stringify(results).replace(/"/g, '&quot;')})">Save Selected</button>
         </div>`;
       container.classList.add('visible');
       status.textContent = `✅ Found ${results.length} place${results.length > 1 ? 's' : ''} — review and save.`;
@@ -2233,17 +2233,67 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
     }
   }
 
-  // ── Save all checked items ────────────────────────────────────────────────
-  function saveAllToInbox(results) {
-    const items = getInbox();
-    results.forEach((item, i) => {
+  // ── Core: insert one entry into TRAVEL ───────────────────────────────────
+  function insertIntoTravel(item) {
+    const country  = (item.country || '').trim();
+    const city     = (item.city    || 'General').trim();
+    const category = item.category || 'Miscellaneous';
+    const entry    = { name: item.name || '—', details: item.details || '' };
+
+    if (!TRAVEL[country]) {
+      TRAVEL[country] = { flag: '🏳️', center: [0, 0], zoom: 5, cities: [] };
+    }
+    let cityObj = TRAVEL[country].cities.find(c => c.name === city);
+    if (!cityObj) {
+      cityObj = { name: city, coords: [0, 0], categories: {} };
+      TRAVEL[country].cities.push(cityObj);
+    }
+    if (!cityObj.categories[category]) cityObj.categories[category] = [];
+    cityObj.categories[category].push(entry);
+  }
+
+  // ── Save selected screenshot results into TRAVEL ──────────────────────────
+  async function saveAllToTravel(results) {
+    const checked = results.filter((_, i) => {
       const chk = document.getElementById(`av-chk-${i}`);
-      if (chk && chk.checked) {
-        items.unshift({ ...item, addedAt: new Date().toISOString(), source: 'screenshot' });
-      }
+      return chk && chk.checked;
     });
-    saveInbox(items);
-    renderInbox();
+    if (checked.length === 0) return;
+
+    // Check for new countries
+    const newCountries = [...new Set(checked.map(i => i.country).filter(c => c && !TRAVEL[c]))];
+    if (newCountries.length > 0) {
+      const names = newCountries.join(', ');
+      const ok = confirm(`"${names}" is not in your travel list yet. Create it?`);
+      if (!ok) return;
+    }
+
+    checked.forEach(item => insertIntoTravel(item));
+    buildHome();
+    closeAddVideo();
+
+    const status = document.getElementById('av-status');
+    status.textContent = `✅ ${checked.length} place${checked.length > 1 ? 's' : ''} added.`;
+  }
+
+  // ── Save single URL result into TRAVEL ───────────────────────────────────
+  async function saveToTravel() {
+    const item = {
+      name:     document.getElementById('av-name').value.trim(),
+      country:  document.getElementById('av-country').value.trim(),
+      city:     document.getElementById('av-city').value.trim(),
+      category: document.getElementById('av-category').value,
+      details:  document.getElementById('av-details').value.trim()
+    };
+    if (!item.name) { alert('Please fill in the Name field before saving.'); return; }
+
+    if (item.country && !TRAVEL[item.country]) {
+      const ok = confirm(`"${item.country}" is not in your travel list yet. Create it?`);
+      if (!ok) return;
+    }
+
+    insertIntoTravel(item);
+    buildHome();
     closeAddVideo();
   }
 
