@@ -697,6 +697,34 @@
     text-transform: uppercase; text-shadow: 0 1px 3px rgba(0,0,0,0.7);
   }
 
+  /* ── HIGHLIGHTS MOBILE COMPACT LIST ── */
+  @media (max-width: 640px) {
+    .highlights-grid {
+      display: flex; flex-direction: column; gap: 0;
+      border: 1px solid var(--border); border-radius: 3px; overflow: hidden;
+    }
+    .highlight-card {
+      height: auto; border: none; border-radius: 0; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0.65rem 0.9rem;
+      background: var(--bg2); transform: none !important;
+    }
+    .highlight-card:last-child { border-bottom: none; }
+    .highlight-card:hover { border-color: var(--border); }
+    .highlight-card-bg { display: none; }
+    .highlight-card-overlay {
+      position: static; background: none; padding: 0; flex-direction: row;
+      align-items: center; gap: 0.5rem; width: 100%;
+    }
+    .highlight-card-name {
+      font-family: var(--serif); font-size: 0.87rem; color: var(--text);
+      text-shadow: none; margin-bottom: 0; flex: 1;
+    }
+    .highlight-card-city {
+      font-size: 0.65rem; color: var(--text3); text-shadow: none;
+      letter-spacing: 0.06em; text-transform: uppercase; flex-shrink: 0;
+    }
+  }
+
   /* Empty state */
   .empty { color: var(--text3); font-style: italic; font-size: 0.9rem; padding: 1rem 0; }
 
@@ -1890,8 +1918,10 @@ function renderHighlightsSection(country) {
     const escWiki = h.wiki.replace(/'/g,"\\'");
     const escName = h.name.replace(/'/g,"\\'");
     return `<button class="highlight-card" onclick="showHighlightModal('${escWiki}','${escName}','${h.city.replace(/'/g,"\\'")}')">
-      <div class="highlight-card-name">${h.name}</div>
-      <div class="highlight-card-city">${h.city}</div>
+      <div class="highlight-card-overlay">
+        <div class="highlight-card-name">${h.name}</div>
+        <div class="highlight-card-city">${h.city}</div>
+      </div>
     </button>`;
   }).join('');
 
