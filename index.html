@@ -829,12 +829,20 @@
     display: flex; justify-content: space-between;
   }
   .av-progress-bar {
-    height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden;
+    height: 4px; background: var(--bg3); border-radius: 2px;
+    position: relative;
   }
   .av-progress-fill {
     height: 100%; background: var(--copper);
     border-radius: 2px; width: 0%;
     transition: width 0.4s ease;
+  }
+  .av-progress-plane {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    font-size: 1rem; line-height: 1;
+    transition: left 0.4s ease;
+    left: 0%;
+    filter: drop-shadow(0 0 3px rgba(184,115,51,0.6));
   }
   .av-multi-results { display: none; margin-bottom: 1rem; }
   .av-multi-results.visible { display: block; }
@@ -2153,7 +2161,10 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
             <span id="av-progress-label">Analyzing…</span>
             <span id="av-progress-pct">0%</span>
           </div>
-          <div class="av-progress-bar"><div class="av-progress-fill" id="av-progress-fill"></div></div>
+          <div class="av-progress-bar">
+            <div class="av-progress-fill" id="av-progress-fill"></div>
+            <span class="av-progress-plane" id="av-progress-plane">✈️</span>
+          </div>
         </div>
       </div>
 
@@ -2347,9 +2358,11 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
       { p: 90, text: 'Almost done…' },
     ];
     let i = 0;
+    const plane = document.getElementById('av-progress-plane');
     _progressTimer = setInterval(() => {
       if (i >= steps.length) { clearInterval(_progressTimer); return; }
       fill.style.width = steps[i].p + '%';
+      if (plane) plane.style.left = `calc(${steps[i].p}% - 0.6rem)`;
       label.textContent = steps[i].text;
       pct.textContent = steps[i].p + '%';
       i++;
@@ -2362,6 +2375,8 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
     const label = document.getElementById('av-progress-label');
     const pct   = document.getElementById('av-progress-pct');
     fill.style.width = success ? '100%' : '0%';
+    const plane = document.getElementById('av-progress-plane');
+    if (plane) plane.style.left = success ? 'calc(100% - 0.6rem)' : '0%';
     label.textContent = success ? 'Done!' : '';
     pct.textContent   = success ? '100%' : '';
     if (!success) document.getElementById('av-progress-wrap').classList.remove('visible');
