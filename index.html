@@ -2586,7 +2586,7 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
     }
 
     checked.forEach(item => insertIntoTravel(item));
-    buildHome();
+    showHome();
     closeAddVideo();
 
     const status = document.getElementById('av-status');
@@ -2610,7 +2610,7 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
     }
 
     insertIntoTravel(item);
-    buildHome();
+    showHome();
     closeAddVideo();
   }
 
