@@ -82,6 +82,8 @@ If no travel info found, return: []`;
 
   // ── URL PATH ──────────────────────────────────────────────────────────────
   let metadata = `Source URL: ${url}\n`;
+  let metadataFields = 0;
+  let fetchFailed = false;
 
   try {
     if (url.includes('tiktok.com')) {
@@ -91,6 +93,7 @@ If no travel info found, return: []`;
       if (oembed) {
         metadata += `Title: ${oembed.title || ''}\n`;
         metadata += `Author: ${oembed.author_name || ''}\n`;
+        metadataFields += 2;
       }
     }
 
@@ -100,7 +103,7 @@ If no travel info found, return: []`;
         'Accept-Language': 'en-US,en;q=0.9'
       },
       redirect: 'follow'
-    }).catch(() => null);
+    }).catch(() => { fetchFailed = true; return null; });
 
     if (page && page.ok) {
       const html = await page.text();
@@ -112,11 +115,28 @@ If no travel info found, return: []`;
                        || get(/content="([^"]+)"\s+property="og:description"/i)
                        || get(/name="description"\s+content="([^"]+)"/i);
       const siteName    = get(/property="og:site_name"\s+content="([^"]+)"/i);
-      if (title)       metadata += `Title: ${title}\n`;
-      if (description) metadata += `Description: ${description}\n`;
-      if (siteName)    metadata += `Platform: ${siteName}\n`;
+      if (title)       { metadata += `Title: ${title}\n`; metadataFields++; }
+      if (description) { metadata += `Description: ${description}\n`; metadataFields++; }
+      if (siteName)    { metadata += `Platform: ${siteName}\n`; metadataFields++; }
+    } else if (page && !page.ok) {
+      return res.status(422).json({
+        error: 'url_blocked',
+        message: `This link is blocked by ${new URL(url).hostname} (${page.status}). Try uploading a screenshot instead.`
+      });
+    } else if (fetchFailed) {
+      return res.status(422).json({
+        error: 'url_unreachable',
+        message: 'Could not reach this URL. It may be a short link or private post. Try uploading a screenshot instead.'
+      });
     }
   } catch (_) {}
+
+  if (metadataFields === 0) {
+    return res.status(422).json({
+      error: 'no_metadata',
+      message: 'No readable content found at this URL — it may be a short link, private post, or app-only link. Try uploading a screenshot instead.'
+    });
+  }
 
   const SYSTEM = `You extract travel inspiration data from social media post metadata.
 Return ONLY a valid JSON object — no markdown fences, no explanation.
@@ -162,11 +182,20 @@ If no travel information can be found, return: {"error": "no travel info found"}
     const match = raw.match(/\{[\s\S]*\}/);
     try {
       const extracted = JSON.parse(match?.[0] || '{}');
+      if (extracted.error === 'no travel info found') {
+        return res.status(422).json({
+          error: 'no_travel_info',
+          message: 'No travel information found in this post. The content may not be travel-related. Try uploading a screenshot instead.'
+        });
+      }
       return res.status(200).json(extracted);
     } catch {
-      return res.status(500).json({ error: 'Analysis failed', detail: 'JSON parse error', raw });
+      return res.status(500).json({
+        error: 'parse_failed',
+        message: 'Unexpected response from AI. Please try again.'
+      });
     }
   } catch (e) {
-    return res.status(500).json({ error: 'Analysis failed', detail: e.message });
+    return res.status(500).json({ error: 'request_failed', message: 'Request failed. Check your connection and try again.' });
   }
 }

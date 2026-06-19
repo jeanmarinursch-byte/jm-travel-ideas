@@ -2267,7 +2267,8 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
       const data = await res.json();
 
       if (data.error) {
-        status.textContent = `⚠️ ${data.error}`;
+        const noMeta = ['no_metadata', 'url_blocked', 'url_unreachable', 'no_travel_info'].includes(data.error);
+        status.innerHTML = `⚠️ ${data.message || data.error}${noMeta ? ' <span style="color:var(--copper);cursor:pointer;text-decoration:underline" onclick="document.getElementById(\'av-file\').click()">Upload screenshot →</span>' : ''}`;
         btn.disabled = false;
         return;
       }
