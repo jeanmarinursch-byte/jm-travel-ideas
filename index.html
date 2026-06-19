@@ -961,6 +961,23 @@ let currentCity = null;
 let history = [];
 
 // ── PASSWORD ──
+// ── User-added entries persistence ───────────────────────────────────────
+const USER_ENTRIES_KEY = 'jm_travel_entries';
+
+function getUserEntries() {
+  try { return JSON.parse(localStorage.getItem(USER_ENTRIES_KEY) || '[]'); } catch { return []; }
+}
+
+function persistUserEntry(item) {
+  const entries = getUserEntries();
+  entries.push(item);
+  localStorage.setItem(USER_ENTRIES_KEY, JSON.stringify(entries));
+}
+
+function mergeUserEntries() {
+  getUserEntries().forEach(item => _insertIntoTravel(item));
+}
+
 function checkPassword() {
   const val = document.getElementById('pw-input').value;
   const err = document.getElementById('pw-error');
@@ -968,6 +985,7 @@ function checkPassword() {
   if (val === PASSWORD) {
     document.getElementById('pw-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
+    mergeUserEntries();
     buildHome();
   } else {
     err.textContent = 'Incorrect password';
@@ -2233,8 +2251,8 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
     }
   }
 
-  // ── Core: insert one entry into TRAVEL ───────────────────────────────────
-  function insertIntoTravel(item) {
+  // ── Core: insert one entry into TRAVEL (no persistence) ─────────────────
+  function _insertIntoTravel(item) {
     const country  = (item.country || '').trim();
     const city     = (item.city    || 'General').trim();
     const category = item.category || 'Miscellaneous';
@@ -2250,6 +2268,12 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
     }
     if (!cityObj.categories[category]) cityObj.categories[category] = [];
     cityObj.categories[category].push(entry);
+  }
+
+  // ── Insert + persist ──────────────────────────────────────────────────────
+  function insertIntoTravel(item) {
+    _insertIntoTravel(item);
+    persistUserEntry(item);
   }
 
   // ── Save selected screenshot results into TRAVEL ──────────────────────────
