@@ -97,6 +97,9 @@ If no travel info found, return: []`;
       } catch {
         return res.status(500).json({ error: 'Analysis failed', detail: 'JSON parse error', raw });
       }
+      if (results.length === 0) {
+        return res.status(200).json({ results: [], _debug: { raw: raw.slice(0, 500), imageCount: imageList.length } });
+      }
 
       // ── Semantic deduplication pass ───────────────────────────────────────
       if (results.length > 1) {
