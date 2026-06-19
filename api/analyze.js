@@ -106,10 +106,13 @@ If no travel information can be found, return: {"error": "no travel info found"}
     const claudeData = await claude.json();
     const raw = claudeData.content?.[0]?.text || '{}';
 
-    // Strip any accidental markdown fences
     const clean = raw.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
-    const extracted = JSON.parse(clean);
-    return res.status(200).json(extracted);
+    try {
+      const extracted = JSON.parse(clean);
+      return res.status(200).json(extracted);
+    } catch (parseErr) {
+      return res.status(500).json({ error: 'Analysis failed', detail: 'JSON parse error', raw: clean });
+    }
 
   } catch (e) {
     return res.status(500).json({ error: 'Analysis failed', detail: e.message });
