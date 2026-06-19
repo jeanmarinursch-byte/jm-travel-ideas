@@ -30,7 +30,7 @@ Known countries: ${COUNTRIES}
 Categories: ${CATEGORIES}
   Food – restaurants, cafes, food markets, bakeries, street food
   Drink – bars, coffee shops, rooftop bars, cocktail spots
-  Culture – museums, temples, monuments, architecture, historical sites, galleries, religious sites
+  Culture – museums, temples, monuments, architecture, historical sites, galleries, religious sites, musicals, theater, plays, opera, concerts, live music, DJ sets, festivals, performing arts venues
   Activities – hiking, beaches, nature, sports, wellness, tours, day trips, wildlife sanctuaries, animal experiences, rescue centres, national parks, regional parks, nature reserves, protected areas, waterfalls, viewpoints, boat trips, water parks, amusement parks, theme parks, casinos, entertainment complexes
   Shopping – boutiques, markets, department stores, souvenirs
   Miscellaneous – anything else travel-related that doesn't fit above
