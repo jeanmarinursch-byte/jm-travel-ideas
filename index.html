@@ -2180,6 +2180,20 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
       <input type="file" id="av-file" accept="image/*" multiple style="display:none" onchange="onImagesSelected(event)" />
       <button class="av-upload-btn" onclick="document.getElementById('av-file').click()">📷 Upload screenshots (up to 10)</button>
 
+      <div class="av-previews" id="av-previews"></div>
+      <div class="av-preview-count" id="av-preview-count"></div>
+      <button class="av-analyze-btn" id="av-img-btn" style="display:none;width:100%;margin-bottom:0.7rem" onclick="analyzeImage()">Analyze Screenshots</button>
+      <div class="av-progress-wrap" id="av-progress-wrap">
+        <div class="av-progress-label">
+          <span id="av-progress-label">Analyzing…</span>
+          <span id="av-progress-pct">0%</span>
+        </div>
+        <div class="av-progress-bar">
+          <div class="av-progress-fill" id="av-progress-fill"></div>
+          <span class="av-progress-plane" id="av-progress-plane">✈️</span>
+        </div>
+      </div>
+
       <div class="av-divider">or paste a link</div>
 
       <div class="av-input-row">
@@ -2187,22 +2201,6 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
           placeholder="Blog, article, Instagram, TikTok…"
           onkeydown="if(event.key==='Enter') analyzeVideo()" />
         <button class="av-analyze-btn" id="av-btn" onclick="analyzeVideo()">Analyze</button>
-      </div>
-
-      <div style="margin-top:0.9rem">
-        <div class="av-previews" id="av-previews"></div>
-        <div class="av-preview-count" id="av-preview-count"></div>
-        <button class="av-analyze-btn" id="av-img-btn" style="display:none;width:100%;margin-bottom:0.7rem" onclick="analyzeImage()">Analyze Screenshots</button>
-        <div class="av-progress-wrap" id="av-progress-wrap">
-          <div class="av-progress-label">
-            <span id="av-progress-label">Analyzing…</span>
-            <span id="av-progress-pct">0%</span>
-          </div>
-          <div class="av-progress-bar">
-            <div class="av-progress-fill" id="av-progress-fill"></div>
-            <span class="av-progress-plane" id="av-progress-plane">✈️</span>
-          </div>
-        </div>
       </div>
 
       <div class="av-status" id="av-status"></div>
