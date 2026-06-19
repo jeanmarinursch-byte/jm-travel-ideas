@@ -363,6 +363,23 @@
     color: var(--text2);
     line-height: 1.5;
   }
+  .entry-hours-btn {
+    background: none; border: 1px solid var(--border); border-radius: 3px;
+    color: var(--text3); font-size: 0.68rem; padding: 2px 7px;
+    cursor: pointer; margin-top: 0.4rem; display: inline-flex;
+    align-items: center; gap: 0.3rem; transition: color 0.15s, border-color 0.15s;
+  }
+  .entry-hours-btn:hover { color: var(--copper); border-color: var(--copper3); }
+  .entry-hours {
+    margin-top: 0.45rem; font-size: 0.75rem; line-height: 1.6;
+    border-top: 1px solid var(--border); padding-top: 0.4rem;
+  }
+  .entry-hours-row { display: flex; gap: 0.4rem; align-items: baseline; }
+  .entry-hours-label { color: var(--copper3); font-size: 0.68rem; min-width: 52px; }
+  .entry-hours-val { color: var(--text2); }
+  .entry-hours-closed { color: #c0392b; }
+  .entry-hours-note { color: var(--text3); font-style: italic; margin-top: 0.2rem; font-size: 0.7rem; }
+  .entry-hours-disclaimer { color: var(--text3); font-size: 0.65rem; margin-top: 0.3rem; }
   .city-context {
     font-size: 0.7rem;
     letter-spacing: 0.1em;
@@ -2068,9 +2085,12 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
     entries.forEach(e => {
       const card = document.createElement('div');
       card.className = 'entry-card';
+      const isCulture = cat === 'Culture';
       card.innerHTML = `
         <div class="entry-name">${e.name}</div>
-        ${e.details ? `<div class="entry-details">${e.details}</div>` : ''}`;
+        ${e.details ? `<div class="entry-details">${e.details}</div>` : ''}
+        ${isCulture ? `<button class="entry-hours-btn" onclick="fetchHours(this, ${JSON.stringify(e.name)}, ${JSON.stringify(currentCity || '')}, ${JSON.stringify(currentCountry || '')})">🕐 Check opening hours</button>` : ''}
+        <div class="entry-hours" style="display:none"></div>`;
       list.appendChild(card);
     });
 
@@ -2586,6 +2606,39 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
 
   <script>
   // ── PWA Service Worker ────────────────────────────────────────────────────
+  // ── Opening hours lookup ──────────────────────────────────────────────────
+  async function fetchHours(btn, name, city, country) {
+    const hoursEl = btn.nextElementSibling;
+    btn.textContent = '⏳ Looking up…';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch('/api/hours', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, city, country })
+      });
+      const data = await res.json();
+
+      if (!data.hours && data.confidence === 'low') {
+        btn.textContent = '🕐 Hours not found';
+        btn.disabled = false;
+        return;
+      }
+
+      btn.style.display = 'none';
+      hoursEl.style.display = 'block';
+      hoursEl.innerHTML = `
+        ${data.hours ? `<div class="entry-hours-row"><span class="entry-hours-label">Open</span><span class="entry-hours-val">${data.hours}</span></div>` : ''}
+        ${data.closed ? `<div class="entry-hours-row"><span class="entry-hours-label">Closed</span><span class="entry-hours-val entry-hours-closed">${data.closed}</span></div>` : ''}
+        ${data.notes ? `<div class="entry-hours-note">ℹ️ ${data.notes}</div>` : ''}
+        <div class="entry-hours-disclaimer">⚠️ Verify before visiting — hours may have changed.</div>`;
+    } catch (e) {
+      btn.textContent = '🕐 Check opening hours';
+      btn.disabled = false;
+    }
+  }
+
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
