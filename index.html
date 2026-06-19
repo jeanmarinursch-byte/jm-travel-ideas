@@ -2324,12 +2324,7 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
     const isGuest = _session && _session.role === 'guest';
     const guestCountries = isGuest ? (_session.countries || []) : null;
 
-    // Guests can only add for their entitled country — must be inside one
     if (isGuest) {
-      if (!currentCountry || !guestCountries.includes(currentCountry)) {
-        alert('You can only add places for countries you have access to.');
-        return;
-      }
       // If inside an entitled country, lock to it; otherwise pre-fill first entitled country
       const countryField = document.getElementById('av-country');
       const defaultCountry = (currentCountry && guestCountries.includes(currentCountry))
