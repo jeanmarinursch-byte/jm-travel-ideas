@@ -1012,22 +1012,21 @@ function migrateInbox() {
 }
 
 function deduplicateTravel() {
-  const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   Object.values(TRAVEL).forEach(country => {
     country.cities.forEach(city => {
       Object.keys(city.categories).forEach(cat => {
-        const seen = {};
-        city.categories[cat] = city.categories[cat].filter(entry => {
-          const key = norm(entry.name);
-          if (seen[key]) {
-            if (entry.details && entry.details !== seen[key].details) {
-              seen[key].details = [seen[key].details, entry.details].filter(Boolean).join(' · ');
+        const deduped = [];
+        city.categories[cat].forEach(entry => {
+          const existing = deduped.find(e => _namesMatch(e.name, entry.name));
+          if (existing) {
+            if (entry.details && entry.details !== existing.details) {
+              existing.details = [existing.details, entry.details].filter(Boolean).join(' · ');
             }
-            return false;
+          } else {
+            deduped.push(entry);
           }
-          seen[key] = entry;
-          return true;
         });
+        city.categories[cat] = deduped;
       });
     });
   });
@@ -2417,6 +2416,17 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
     }
   }
 
+  // ── Fuzzy name match ──────────────────────────────────────────────────────
+  function _namesMatch(a, b) {
+    const words = s => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 2);
+    const wa = new Set(words(a));
+    const wb = words(b);
+    if (wa.size === 0 || wb.length === 0) return false;
+    const shared = wb.filter(w => wa.has(w)).length;
+    // Match if >50% of the shorter name's words are shared
+    return shared / Math.min(wa.size, wb.length) >= 0.6;
+  }
+
   // ── Core: insert one entry into TRAVEL (no persistence) ─────────────────
   function _insertIntoTravel(item) {
     const country  = (item.country || '').trim();
@@ -2434,9 +2444,7 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
     }
     if (!cityObj.categories[category]) cityObj.categories[category] = [];
 
-    // Deduplicate: if same name already exists, merge details instead of adding
-    const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const existing = cityObj.categories[category].find(e => norm(e.name) === norm(entry.name));
+    const existing = cityObj.categories[category].find(e => _namesMatch(e.name, entry.name));
     if (existing) {
       if (entry.details && entry.details !== existing.details) {
         existing.details = [existing.details, entry.details].filter(Boolean).join(' · ');
