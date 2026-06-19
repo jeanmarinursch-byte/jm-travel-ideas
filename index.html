@@ -883,6 +883,8 @@
   .av-multi-item-body { flex: 1; min-width: 0; }
   .av-multi-item-name { font-family: var(--serif); font-size: 0.9rem; color: var(--text); }
   .av-multi-item-meta { font-size: 0.72rem; color: var(--text3); margin-top: 0.15rem; }
+  .av-multi-exists { opacity: 0.45; }
+  .av-exists-tag { font-size: 0.65rem; color: var(--text3); font-family: var(--sans); letter-spacing: 0.04em; margin-left: 0.4rem; text-transform: uppercase; }
   .av-save-all-btn {
     background: var(--copper); color: var(--bg); border: none;
     border-radius: 3px; padding: 0.5rem 1.1rem; cursor: pointer;
@@ -2463,23 +2465,7 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
       }
 
       const container = document.getElementById('av-multi-results');
-      container.innerHTML = results.map((item, i) => `
-        <div class="av-multi-item">
-          <input type="checkbox" id="av-chk-${i}" checked>
-          <div class="av-multi-item-body">
-            <div class="av-multi-item-name">${item.name || '—'}</div>
-            <div class="av-multi-item-meta">${[item.country, item.city, item.category].filter(Boolean).join(' · ')}</div>
-            ${item.details ? `<div style="font-size:0.75rem;color:var(--text2);margin-top:0.15rem">${item.details}</div>` : ''}
-          </div>
-        </div>`).join('') +
-        `<div class="av-actions" style="margin-top:0.8rem">
-          <button class="av-cancel-btn" onclick="resetAnalysis()">Clear</button>
-          <button class="av-save-all-btn" onclick="saveAllToTravel(${JSON.stringify(results).replace(/"/g, '&quot;')})">Save Selected</button>
-        </div>`;
-      container.classList.add('visible');
-      finishProgress(true);
-      status.textContent = `✅ Found ${results.length} place${results.length > 1 ? 's' : ''} — review and save.`;
-      btn.disabled = false;
+      renderChecklist(results, container, status, btn, finishProgress);
     } catch (e) {
       finishProgress(false);
       status.textContent = '❌ Request failed. Check your connection and try again.';
@@ -2488,6 +2474,58 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
   }
 
   // ── Fuzzy name match ──────────────────────────────────────────────────────
+  function _existsInTravel(name) {
+    for (const country of Object.values(TRAVEL)) {
+      for (const city of country.cities) {
+        for (const entries of Object.values(city.categories)) {
+          if (entries.some(e => _namesMatch(e.name, name))) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  function renderChecklist(results, container, status, btn, finishFn) {
+    const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const seen = {};
+    const deduped = results.filter(item => {
+      const key = norm(item.name || '');
+      if (seen[key]) return false;
+      seen[key] = true;
+      return true;
+    });
+
+    const annotated = deduped.map(item => ({
+      ...item,
+      _exists: _existsInTravel(item.name)
+    }));
+
+    const newCount = annotated.filter(i => !i._exists).length;
+    const dupCount = annotated.length - newCount;
+
+    container.innerHTML = annotated.map((item, i) => `
+      <div class="av-multi-item${item._exists ? ' av-multi-exists' : ''}">
+        <input type="checkbox" id="av-chk-${i}" ${item._exists ? '' : 'checked'}>
+        <div class="av-multi-item-body">
+          <div class="av-multi-item-name">${item.name || '—'}${item._exists ? ' <span class="av-exists-tag">already in list</span>' : ''}</div>
+          <div class="av-multi-item-meta">${[item.country, item.city, item.category].filter(Boolean).join(' · ')}</div>
+          ${item.details ? `<div style="font-size:0.75rem;color:var(--text2);margin-top:0.15rem">${item.details}</div>` : ''}
+        </div>
+      </div>`).join('') +
+      `<div class="av-actions" style="margin-top:0.8rem">
+        <button class="av-cancel-btn" onclick="resetAnalysis()">Clear</button>
+        <button class="av-save-all-btn" onclick="saveAllToTravel(${JSON.stringify(annotated).replace(/"/g, '&quot;')})">Save Selected</button>
+      </div>`;
+    container.classList.add('visible');
+
+    let msg = `✅ Found ${annotated.length} place${annotated.length !== 1 ? 's' : ''}`;
+    if (dupCount > 0) msg += ` — ${newCount} new, ${dupCount} already in your list`;
+    msg += ' — review and save.';
+    if (finishFn) finishFn(true);
+    if (status) status.textContent = msg;
+    if (btn) btn.disabled = false;
+  }
+
   function _namesMatch(a, b) {
     const words = s => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 2);
     const wa = new Set(words(a));
@@ -2614,22 +2652,7 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
           return true;
         });
         const container = document.getElementById('av-multi-results');
-        container.innerHTML = deduped.map((item, i) => `
-          <div class="av-multi-item">
-            <input type="checkbox" id="av-chk-${i}" checked>
-            <div class="av-multi-item-body">
-              <div class="av-multi-item-name">${item.name || '—'}</div>
-              <div class="av-multi-item-meta">${[item.country, item.city, item.category].filter(Boolean).join(' · ')}</div>
-              ${item.details ? `<div style="font-size:0.75rem;color:var(--text2);margin-top:0.15rem">${item.details}</div>` : ''}
-            </div>
-          </div>`).join('') +
-          `<div class="av-actions" style="margin-top:0.8rem">
-            <button class="av-cancel-btn" onclick="resetAnalysis()">Clear</button>
-            <button class="av-save-all-btn" onclick="saveAllToTravel(${JSON.stringify(deduped).replace(/"/g, '&quot;')})">Save Selected</button>
-          </div>`;
-        container.classList.add('visible');
-        status.textContent = `✅ Found ${deduped.length} place${deduped.length !== 1 ? 's' : ''} — review and save.`;
-        btn.disabled = false;
+        renderChecklist(deduped, container, status, btn, null);
         return;
       }
 
