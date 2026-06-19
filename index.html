@@ -2,6 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="JM Travel">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JM — Travel List</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -417,12 +422,27 @@
     gap: 8px;
   }
   .highlight-card {
-    background: var(--bg2); border: 1px solid var(--border); border-radius: 3px;
-    cursor: pointer; padding: 0.7rem 0.9rem; text-align: left;
-    transition: border-color 0.15s, background 0.15s;
+    position: relative; overflow: hidden; border-radius: 3px;
+    border: 1px solid var(--border); cursor: pointer;
+    height: 140px; text-align: left;
+    transition: border-color 0.2s, transform 0.2s;
+    background: var(--bg2);
   }
-  .highlight-card:hover { border-color: var(--copper3); background: var(--bg3); }
-  .highlight-card-nolink:hover { border-color: var(--border); background: var(--bg2); }
+  .highlight-card:hover { border-color: var(--copper3); transform: translateY(-2px); }
+  .highlight-card-nolink:hover { border-color: var(--border); transform: none; }
+  .highlight-card-bg {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    transition: transform 0.35s ease;
+  }
+  .highlight-card:hover .highlight-card-bg { transform: scale(1.06); }
+  .highlight-card-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.18) 55%, transparent 100%);
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 0.65rem 0.8rem;
+  }
+  .highlight-card-nolink:hover { border-color: var(--border); transform: none; }
 
   /* ── LOCAL FOODS TO TRY ── */
   #local-foods-section { margin-bottom: 1.6rem; }
@@ -652,11 +672,12 @@
   }
   .hl-close:hover { background: var(--border); color: var(--text); }
   .highlight-card-name {
-    font-family: var(--serif); font-size: 0.85rem; color: var(--text);
-    margin-bottom: 0.2rem;
+    font-family: var(--serif); font-size: 0.85rem; color: #fff;
+    margin-bottom: 0.15rem; text-shadow: 0 1px 4px rgba(0,0,0,0.7);
   }
   .highlight-card-city {
-    font-size: 0.7rem; color: var(--copper3); letter-spacing: 0.06em; text-transform: uppercase;
+    font-size: 0.68rem; color: rgba(255,255,255,0.82); letter-spacing: 0.06em;
+    text-transform: uppercase; text-shadow: 0 1px 3px rgba(0,0,0,0.7);
   }
 
   /* Empty state */
@@ -680,6 +701,115 @@
     margin-top: 0.6rem;
   }
   .cat-section.open .entries-list { display: flex; }
+
+  /* ── VIDEO ANALYSIS FEATURE ─────────────────────────────────── */
+  .add-video-btn {
+    position: fixed; bottom: 2rem; right: 2rem; z-index: 900;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: var(--copper); color: var(--bg);
+    border: none; cursor: pointer; font-size: 1.6rem; line-height: 1;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .add-video-btn:hover { transform: scale(1.08); box-shadow: 0 6px 22px rgba(0,0,0,0.4); }
+
+  .av-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.55); align-items: center; justify-content: center;
+  }
+  .av-overlay.open { display: flex; }
+  .av-modal {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    width: min(520px, 92vw); max-height: 90vh; overflow-y: auto;
+    padding: 1.6rem 1.8rem; position: relative;
+  }
+  .av-modal-title {
+    font-family: var(--serif); font-size: 1.1rem; color: var(--copper);
+    margin-bottom: 1.1rem;
+  }
+  .av-input-row { display: flex; gap: 0.6rem; margin-bottom: 1rem; }
+  .av-url-input {
+    flex: 1; background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 3px; padding: 0.55rem 0.75rem;
+    font-family: var(--sans); font-size: 0.82rem; color: var(--text1);
+    outline: none;
+  }
+  .av-url-input:focus { border-color: var(--copper3); }
+  .av-analyze-btn {
+    background: var(--copper); color: var(--bg); border: none;
+    border-radius: 3px; padding: 0.55rem 1rem; cursor: pointer;
+    font-family: var(--sans); font-size: 0.82rem; font-weight: 600;
+    white-space: nowrap; transition: opacity 0.15s;
+  }
+  .av-analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .av-status { font-size: 0.78rem; color: var(--text3); margin-bottom: 0.9rem; min-height: 1.1rem; }
+  .av-result {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 4px;
+    padding: 1rem 1.1rem; margin-bottom: 1rem; display: none;
+  }
+  .av-result.visible { display: block; }
+  .av-field { margin-bottom: 0.65rem; }
+  .av-field label {
+    display: block; font-size: 0.68rem; color: var(--text3);
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.2rem;
+  }
+  .av-field input, .av-field select {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 3px; padding: 0.4rem 0.6rem;
+    font-family: var(--sans); font-size: 0.82rem; color: var(--text1); outline: none;
+  }
+  .av-field input:focus, .av-field select:focus { border-color: var(--copper3); }
+  .av-confidence { font-size: 0.7rem; color: var(--text3); margin-bottom: 0.8rem; }
+  .av-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
+  .av-save-btn {
+    background: var(--copper); color: var(--bg); border: none;
+    border-radius: 3px; padding: 0.5rem 1.1rem; cursor: pointer;
+    font-family: var(--sans); font-size: 0.82rem; font-weight: 600;
+  }
+  .av-cancel-btn {
+    background: transparent; color: var(--text3); border: 1px solid var(--border);
+    border-radius: 3px; padding: 0.5rem 1rem; cursor: pointer;
+    font-family: var(--sans); font-size: 0.82rem;
+  }
+  .av-close-btn {
+    position: absolute; top: 0.9rem; right: 1rem;
+    background: none; border: none; font-size: 1.2rem; color: var(--text3);
+    cursor: pointer; line-height: 1;
+  }
+
+  /* Inbox panel */
+  .inbox-section {
+    margin: 1.5rem 2rem 0.5rem;
+    display: none;
+  }
+  .inbox-section.has-items { display: block; }
+  .inbox-header {
+    font-family: var(--serif); font-size: 1rem; color: var(--copper);
+    border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;
+    margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.6rem;
+  }
+  .inbox-badge {
+    background: var(--copper); color: var(--bg);
+    font-size: 0.65rem; font-weight: 700; border-radius: 10px;
+    padding: 1px 6px; font-family: var(--sans);
+  }
+  .inbox-item {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 4px;
+    padding: 0.7rem 0.9rem; margin-bottom: 0.5rem;
+    display: flex; align-items: flex-start; gap: 0.8rem;
+  }
+  .inbox-item-body { flex: 1; min-width: 0; }
+  .inbox-item-name { font-size: 0.85rem; color: var(--text1); font-weight: 600; }
+  .inbox-item-meta { font-size: 0.72rem; color: var(--text3); margin-top: 0.15rem; }
+  .inbox-item-details { font-size: 0.75rem; color: var(--text2); margin-top: 0.25rem; }
+  .inbox-item-actions { display: flex; gap: 0.4rem; flex-shrink: 0; padding-top: 0.1rem; }
+  .inbox-delete-btn {
+    background: none; border: 1px solid var(--border); border-radius: 3px;
+    color: var(--text3); font-size: 0.7rem; padding: 2px 7px; cursor: pointer;
+  }
+  .inbox-delete-btn:hover { border-color: #c0392b; color: #c0392b; }
+
 </style>
 </head>
 <body>
@@ -704,6 +834,7 @@
 
   <!-- HOME VIEW -->
   <div class="view active" id="view-home">
+    <div class="inbox-section" id="inbox-section"></div>
     <div style="padding-top:1rem">
       <p class="section-label">Home Base</p>
       <div class="country-grid" id="grid-priority"></div>
@@ -912,7 +1043,7 @@ const COUNTRY_TOP5 = {
   'Bolivia':     [{name:'Salar de Uyuni',city:'Uyuni',wiki:'Salar de Uyuni'},{name:'Lake Titicaca',city:'Copacabana',wiki:'Lake Titicaca'},{name:'Tiwanaku Ruins',city:'Tiwanaku',wiki:'Tiwanaku'},{name:'Valle de la Luna',city:'La Paz',wiki:'Valle de la Luna (Bolivia)'},{name:'Sucre Historic Center',city:'Sucre',wiki:'Historic City of Sucre'}],
   'Chile':       [{name:'Torres del Paine National Park',city:'Patagonia',wiki:'Torres del Paine National Park'},{name:'Easter Island (Rapa Nui)',city:'Rapa Nui',wiki:'Moai'},{name:'Atacama Desert',city:'San Pedro de Atacama',wiki:'Atacama Desert'},{name:'Chiloé Island',city:'Chiloé',wiki:'Chiloé Island'},{name:'Valparaíso',city:'Valparaíso',wiki:'Valparaíso'}],
   'China':       [{name:'The Great Wall',city:'Beijing',wiki:'Great Wall of China'},{name:'Forbidden City',city:'Beijing',wiki:'Forbidden City'},{name:'Terracotta Army',city:"Xi'an",wiki:'Terracotta Army'},{name:'Lijiang Old Town',city:'Lijiang',wiki:'Lijiang Old Town'},{name:'Suzhou Classical Gardens',city:'Suzhou',wiki:'Classical Gardens of Suzhou'}],
-  'Hong Kong':   [{name:'Victoria Peak',city:'Hong Kong Island',wiki:'Victoria Peak'},{name:'Tian Tan Big Buddha',city:'Lantau Island',wiki:'Tian Tan Buddha'},{name:'Temple Street Night Market',city:'Kowloon',wiki:'Temple Street, Kowloon'},{name:'Star Ferry',city:'Victoria Harbour',wiki:'Star Ferry'},{name:'Symphony of Lights',city:'Victoria Harbour',wiki:'A Symphony of Lights'}],
+  'Hong Kong':   [{name:'Victoria Peak',city:'Hong Kong Island',wiki:'Victoria Peak'},{name:'Tian Tan Big Buddha',city:'Lantau Island',wiki:'Tian Tan Buddha'},{name:'Temple Street Night Market',city:'Kowloon',wiki:'Temple Street, Kowloon'},{name:'Star Ferry',city:'Victoria Harbour',wiki:'Star Ferry'},{name:'Symphony of Lights',city:'Victoria Harbour',wiki:'Victoria Harbour'}],
   'Hungary':     [{name:'Buda Castle',city:'Budapest',wiki:'Buda Castle'},{name:'Hungarian Parliament Building',city:'Budapest',wiki:'Hungarian Parliament Building'},{name:'Széchenyi Thermal Bath',city:'Budapest',wiki:'Széchenyi thermal bath'},{name:"Fisherman's Bastion",city:'Budapest',wiki:"Fisherman's Bastion"},{name:'Hollókő Medieval Village',city:'Hollókő',wiki:'Hollókő'}],
   'India':       [{name:'Taj Mahal',city:'Agra',wiki:'Taj Mahal'},{name:'Amber Fort',city:'Jaipur',wiki:'Amber Fort'},{name:'Varanasi Ghats',city:'Varanasi',wiki:'Ghats in Varanasi'},{name:'Ajanta Caves',city:'Aurangabad',wiki:'Ajanta Caves'},{name:'Kerala Backwaters',city:'Kerala',wiki:'Kerala backwaters'}],
   'Indonesia':   [{name:'Borobudur Temple',city:'Yogyakarta',wiki:'Borobudur'},{name:'Tanah Lot Temple',city:'Bali',wiki:'Tanah Lot'},{name:'Komodo National Park',city:'Komodo',wiki:'Komodo National Park'},{name:'Prambanan Temple',city:'Yogyakarta',wiki:'Prambanan'},{name:'Raja Ampat Islands',city:'West Papua',wiki:'Raja Ampat Islands'}],
@@ -1862,5 +1993,234 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
   }
 }
 </script>
+
+  <!-- ── VIDEO ANALYSIS ───────────────────────────────────────── -->
+  <button class="add-video-btn" title="Add from video" onclick="openAddVideo()">＋</button>
+
+  <div class="av-overlay" id="av-overlay" onclick="e => { if(e.target===this) closeAddVideo(); }">
+    <div class="av-modal">
+      <button class="av-close-btn" onclick="closeAddVideo()">✕</button>
+      <div class="av-modal-title">📱 Add from Instagram / TikTok</div>
+      <div class="av-input-row">
+        <input class="av-url-input" id="av-url" type="url"
+          placeholder="Paste reel or video URL here…"
+          onkeydown="if(event.key==='Enter') analyzeVideo()" />
+        <button class="av-analyze-btn" id="av-btn" onclick="analyzeVideo()">Analyze</button>
+      </div>
+      <div class="av-status" id="av-status"></div>
+
+      <div class="av-result" id="av-result">
+        <div class="av-field">
+          <label>Name / Place</label>
+          <input id="av-name" type="text" />
+        </div>
+        <div class="av-field">
+          <label>Country</label>
+          <input id="av-country" type="text" />
+        </div>
+        <div class="av-field">
+          <label>City</label>
+          <input id="av-city" type="text" />
+        </div>
+        <div class="av-field">
+          <label>Category</label>
+          <select id="av-category">
+            <option>Food</option>
+            <option>Drink</option>
+            <option>Culture</option>
+            <option>Activities</option>
+            <option>Shopping</option>
+            <option>Miscellaneous</option>
+          </select>
+        </div>
+        <div class="av-field">
+          <label>Details</label>
+          <input id="av-details" type="text" />
+        </div>
+        <div class="av-confidence" id="av-confidence"></div>
+        <div class="av-actions">
+          <button class="av-cancel-btn" onclick="resetAnalysis()">Clear</button>
+          <button class="av-save-btn" onclick="saveToInbox()">Save to Inbox</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // ── Inbox helpers (localStorage) ─────────────────────────────────────────
+  const INBOX_KEY = 'jm_travel_inbox';
+  function getInbox() {
+    try { return JSON.parse(localStorage.getItem(INBOX_KEY) || '[]'); } catch { return []; }
+  }
+  function saveInbox(items) {
+    localStorage.setItem(INBOX_KEY, JSON.stringify(items));
+  }
+
+  function renderInbox() {
+    const items = getInbox();
+    // Show/hide inbox section on the home view
+    let sec = document.getElementById('inbox-section');
+    if (!sec) return;
+    if (items.length === 0) { sec.classList.remove('has-items'); sec.innerHTML = ''; return; }
+    sec.classList.add('has-items');
+    sec.innerHTML = `
+      <div class="inbox-header">
+        📥 Inbox
+        <span class="inbox-badge">${items.length}</span>
+      </div>
+      ${items.map((item, i) => `
+        <div class="inbox-item">
+          <div class="inbox-item-body">
+            <div class="inbox-item-name">${item.name || '—'}</div>
+            <div class="inbox-item-meta">${[item.country, item.city, item.category].filter(Boolean).join(' · ')}</div>
+            ${item.details ? `<div class="inbox-item-details">${item.details}</div>` : ''}
+          </div>
+          <div class="inbox-item-actions">
+            <button class="inbox-delete-btn" onclick="deleteInboxItem(${i})">Remove</button>
+          </div>
+        </div>`).join('')}`;
+  }
+
+  function deleteInboxItem(index) {
+    const items = getInbox();
+    items.splice(index, 1);
+    saveInbox(items);
+    renderInbox();
+  }
+
+  // ── Modal controls ───────────────────────────────────────────────────────
+  function openAddVideo() {
+    document.getElementById('av-overlay').classList.add('open');
+    setTimeout(() => document.getElementById('av-url').focus(), 50);
+  }
+  function closeAddVideo() {
+    document.getElementById('av-overlay').classList.remove('open');
+    resetAnalysis();
+  }
+  function resetAnalysis() {
+    document.getElementById('av-url').value = '';
+    document.getElementById('av-status').textContent = '';
+    document.getElementById('av-result').classList.remove('visible');
+    document.getElementById('av-btn').disabled = false;
+  }
+
+  // ── Analyze ──────────────────────────────────────────────────────────────
+  async function analyzeVideo() {
+    const url = document.getElementById('av-url').value.trim();
+    if (!url) { document.getElementById('av-status').textContent = 'Please paste a URL first.'; return; }
+
+    const btn = document.getElementById('av-btn');
+    const status = document.getElementById('av-status');
+    btn.disabled = true;
+    status.textContent = '⏳ Fetching and analyzing…';
+    document.getElementById('av-result').classList.remove('visible');
+
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      const data = await res.json();
+
+      if (data.error) {
+        status.textContent = `⚠️ ${data.error}`;
+        btn.disabled = false;
+        return;
+      }
+
+      // Populate result form
+      document.getElementById('av-name').value     = data.name     || '';
+      document.getElementById('av-country').value  = data.country  || '';
+      document.getElementById('av-city').value     = data.city     || '';
+      document.getElementById('av-details').value  = data.details  || '';
+      const catEl = document.getElementById('av-category');
+      if (data.category) {
+        [...catEl.options].forEach(o => { o.selected = o.value === data.category; });
+      }
+      document.getElementById('av-confidence').textContent =
+        data.confidence ? `Confidence: ${data.confidence}` : '';
+
+      status.textContent = '✅ Done — review and edit below, then save.';
+      document.getElementById('av-result').classList.add('visible');
+    } catch (e) {
+      status.textContent = '❌ Request failed. Check your connection and try again.';
+      btn.disabled = false;
+    }
+  }
+
+  // ── Save to inbox ────────────────────────────────────────────────────────
+  function saveToInbox() {
+    const entry = {
+      name:     document.getElementById('av-name').value.trim(),
+      country:  document.getElementById('av-country').value.trim(),
+      city:     document.getElementById('av-city').value.trim(),
+      category: document.getElementById('av-category').value,
+      details:  document.getElementById('av-details').value.trim(),
+      addedAt:  new Date().toISOString(),
+      source:   document.getElementById('av-url').value.trim()
+    };
+    if (!entry.name) { alert('Please fill in the Name field before saving.'); return; }
+    const items = getInbox();
+    items.unshift(entry);
+    saveInbox(items);
+    renderInbox();
+    closeAddVideo();
+  }
+
+  // Close overlay when clicking the backdrop
+  document.getElementById('av-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeAddVideo();
+  });
+
+  // Render inbox whenever the home view becomes visible
+  const _origShowView = showView;
+  showView = function(viewId) {
+    _origShowView(viewId);
+    if (viewId === 'view-home') setTimeout(renderInbox, 50);
+  };
+  </script>
+
+
+  <script>
+  // ── PWA Service Worker ────────────────────────────────────────────────────
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+
+  // ── Share Target handler ──────────────────────────────────────────────────
+  // When the app is opened via the iOS/Android share sheet, the shared URL
+  // arrives as ?share-url=... or embedded in ?share-text=...
+  (function handleShareTarget() {
+    const params = new URLSearchParams(window.location.search);
+    const sharedUrl  = params.get('share-url')  || '';
+    const sharedText = params.get('share-text')  || '';
+    const sharedTitle = params.get('share-title') || '';
+
+    // Extract the first URL found in text or url params
+    const urlRegex = /https?:\/\/[^\s"'<>)]+/;
+    const extracted = sharedUrl || sharedText.match(urlRegex)?.[0] || '';
+
+    if (extracted) {
+      // Clean the URL from the address bar so Back works cleanly
+      history.replaceState({}, '', '/');
+
+      // Wait for the app to finish rendering, then auto-open the analysis modal
+      const tryOpen = (attempts) => {
+        const urlInput = document.getElementById('av-url');
+        if (urlInput) {
+          urlInput.value = extracted;
+          openAddVideo();
+          // Auto-trigger analysis after a short delay so the modal is visible
+          setTimeout(analyzeVideo, 400);
+        } else if (attempts > 0) {
+          setTimeout(() => tryOpen(attempts - 1), 200);
+        }
+      };
+      // Try up to 20 times (4 seconds) waiting for the DOM
+      setTimeout(() => tryOpen(20), 300);
+    }
+  })();
+  </script>
 </body>
 </html>

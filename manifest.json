@@ -1,0 +1,26 @@
+{
+  "name": "JM Travel List",
+  "short_name": "JM Travel",
+  "description": "JM's personal travel inspiration list",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1714",
+  "theme_color": "#1a1714",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231a1714'/><text y='70' x='50' text-anchor='middle' font-size='60'>✈</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "params": {
+      "url":   "share-url",
+      "text":  "share-text",
+      "title": "share-title"
+    }
+  }
+}
