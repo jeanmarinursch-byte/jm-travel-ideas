@@ -2383,7 +2383,17 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
       TRAVEL[country].cities.push(cityObj);
     }
     if (!cityObj.categories[category]) cityObj.categories[category] = [];
-    cityObj.categories[category].push(entry);
+
+    // Deduplicate: if same name already exists, merge details instead of adding
+    const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const existing = cityObj.categories[category].find(e => norm(e.name) === norm(entry.name));
+    if (existing) {
+      if (entry.details && entry.details !== existing.details) {
+        existing.details = [existing.details, entry.details].filter(Boolean).join(' · ');
+      }
+    } else {
+      cityObj.categories[category].push(entry);
+    }
   }
 
   // ── Insert + persist ──────────────────────────────────────────────────────
