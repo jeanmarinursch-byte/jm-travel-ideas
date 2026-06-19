@@ -5,7 +5,10 @@
   ],
   "functions": {
     "api/analyze.js": {
-      "maxDuration": 30
+      "maxDuration": 60
+    },
+    "api/login.js": {
+      "maxDuration": 10
     }
   }
 }

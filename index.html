@@ -2520,8 +2520,19 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
         return;
       }
 
+      // For guests, silently filter to entitled countries only
+      const guestFilter = (_session && _session.role === 'guest') ? (_session.countries || []) : null;
+      const filtered = guestFilter ? results.filter(r => !r.country || guestFilter.includes(r.country)) : results;
+      if (filtered.length === 0) {
+        finishProgress(false);
+        status.textContent = guestFilter
+          ? `⚠️ No travel info found for ${guestFilter.join(' or ')} in these screenshots.`
+          : '⚠️ No travel info found in these screenshots.';
+        btn.disabled = false;
+        return;
+      }
       const container = document.getElementById('av-multi-results');
-      renderChecklist(results, container, status, btn, finishProgress);
+      renderChecklist(filtered, container, status, btn, finishProgress);
     } catch (e) {
       finishProgress(false);
       status.textContent = '❌ Request failed. Check your connection and try again.';
