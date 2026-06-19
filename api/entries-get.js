@@ -1,24 +1,17 @@
+import { list, head } from '@vercel/blob';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const token = process.env.BLOB_READ_WRITE_TOKEN;
-  if (!token) return res.status(500).json({ error: 'Blob not configured' });
-
   try {
-    // List blobs to find our entries file
-    const listRes = await fetch(
-      `https://blob.vercel-storage.com?prefix=travel-entries.json`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    const listData = await listRes.json();
-    const blob = listData.blobs?.[0];
+    const { blobs } = await list({ prefix: 'travel-entries.json' });
+    if (!blobs.length) return res.status(200).json({ entries: [] });
 
-    if (!blob) return res.status(200).json({ entries: [] });
-
-    const dataRes = await fetch(blob.url);
+    const dataRes = await fetch(blobs[0].url);
+    if (!dataRes.ok) return res.status(200).json({ entries: [] });
     const entries = await dataRes.json();
     return res.status(200).json({ entries });
   } catch (e) {
