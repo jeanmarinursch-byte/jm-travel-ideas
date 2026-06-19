@@ -10,7 +10,7 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.ANTHROPIC_API_KEY || '';
 
-  const CATEGORIES = `Food, Drink, Culture, Activities, Shopping, Miscellaneous`;
+  const CATEGORIES = `Food, Drink, Culture, Activities, Shopping, Stays, Miscellaneous`;
   const COUNTRIES = `Albania, Argentina, Bolivia, Chile, China, Hong Kong, Hungary, India, Indonesia, Italy, Japan, Kyrgyzstan, Laos, Malaysia, Mexico, Morocco, New York, Norway, Peru, Poland, Portugal, Slovenia, South Korea, Spain, Taiwan, Tajikistan, Thailand, USA, Uzbekistan`;
 
   // ── IMAGE PATH (single or multiple) ──────────────────────────────────────
@@ -33,6 +33,7 @@ Categories: ${CATEGORIES}
   Culture – museums, temples, monuments, architecture, historical sites, galleries, religious sites, musicals, theater, plays, opera, concerts, live music, DJ sets, festivals, performing arts venues
   Activities – hiking, beaches, nature, sports, wellness, tours, day trips, wildlife sanctuaries, animal experiences, rescue centres, national parks, regional parks, nature reserves, protected areas, waterfalls, viewpoints, boat trips, water parks, amusement parks, theme parks, casinos, entertainment complexes
   Shopping – boutiques, markets, department stores, souvenirs
+  Stays – hotels, guesthouses, hostels, ryokans, riads, resorts, lodges, villas, homestays
   Miscellaneous – anything else travel-related that doesn't fit above
 
 Each item in the array:
@@ -40,7 +41,7 @@ Each item in the array:
   "name": "place name, landmark, or activity — include descriptive activities like 'Explore the Old Town', 'Night market visit', 'Sunrise hike' if no specific name is given",
   "country": "from known list or null",
   "city": "city or district or null",
-  "category": "Food|Drink|Culture|Activities|Shopping|Miscellaneous",
+  "category": "Food|Drink|Culture|Activities|Shopping|Stays|Miscellaneous",
   "details": "one concise sentence combining all relevant info"
 }
 
@@ -228,7 +229,7 @@ Each item:
   "name":     "specific place name or activity",
   "country":  "from known list or null",
   "city":     "city or district or null",
-  "category": "Food|Drink|Culture|Activities|Shopping|Miscellaneous",
+  "category": "Food|Drink|Culture|Activities|Shopping|Stays|Miscellaneous",
   "details":  "one concise sentence with the most useful info"
 }
 
