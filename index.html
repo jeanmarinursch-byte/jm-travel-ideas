@@ -1153,9 +1153,7 @@ function showHome() {
   setHeader('Bon Vent <span>by JM</span>', false, false);
   buildHome();
   showView('view-home');
-  // Hide + button for guests on home — they can only add from inside a country
-  const isGuest = _session && _session.role === 'guest';
-  _updateAddBtn(!isGuest);
+  _updateAddBtn(true);
 }
 
 function goBack() {
@@ -2332,11 +2330,24 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
         alert('You can only add places for countries you have access to.');
         return;
       }
-      // Pre-fill and lock the country field
+      // If inside an entitled country, lock to it; otherwise pre-fill first entitled country
       const countryField = document.getElementById('av-country');
-      countryField.value = currentCountry;
-      countryField.readOnly = true;
-      countryField.style.opacity = '0.6';
+      const defaultCountry = (currentCountry && guestCountries.includes(currentCountry))
+        ? currentCountry
+        : guestCountries[0];
+      countryField.value = defaultCountry || '';
+      if (guestCountries.length === 1) {
+        countryField.readOnly = true;
+        countryField.style.opacity = '0.6';
+      } else if (!currentCountry || !guestCountries.includes(currentCountry)) {
+        // On home page with multiple countries — let them type but only from their list
+        countryField.readOnly = false;
+        countryField.style.opacity = '';
+        countryField.placeholder = guestCountries.join(' or ');
+      } else {
+        countryField.readOnly = true;
+        countryField.style.opacity = '0.6';
+      }
     } else {
       const countryField = document.getElementById('av-country');
       countryField.readOnly = false;
