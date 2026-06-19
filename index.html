@@ -1095,7 +1095,7 @@ function checkPassword() {
     migrateInbox();
     mergeUserEntries();
     deduplicateTravel();
-    buildHome();
+    showHome();
   } else {
     err.textContent = 'Incorrect password';
     inp.classList.remove('shake');
