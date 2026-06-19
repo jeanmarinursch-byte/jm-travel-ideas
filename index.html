@@ -777,6 +777,42 @@
     background: none; border: none; font-size: 1.2rem; color: var(--text3);
     cursor: pointer; line-height: 1;
   }
+  .av-divider {
+    display: flex; align-items: center; gap: 0.7rem;
+    margin: 0.8rem 0; color: var(--text3); font-size: 0.72rem; letter-spacing: 0.08em;
+  }
+  .av-divider::before, .av-divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+  .av-upload-btn {
+    width: 100%; padding: 0.6rem; border: 1px dashed var(--border);
+    border-radius: 3px; background: var(--bg2); color: var(--text2);
+    font-family: var(--sans); font-size: 0.82rem; cursor: pointer;
+    transition: border-color 0.15s, color 0.15s; text-align: center;
+  }
+  .av-upload-btn:hover { border-color: var(--copper3); color: var(--copper); }
+  .av-preview {
+    width: 100%; max-height: 180px; object-fit: contain;
+    border-radius: 3px; border: 1px solid var(--border);
+    margin-bottom: 0.7rem; display: none;
+  }
+  .av-preview.visible { display: block; }
+  .av-multi-results { display: none; margin-bottom: 1rem; }
+  .av-multi-results.visible { display: block; }
+  .av-multi-item {
+    display: flex; align-items: flex-start; gap: 0.6rem;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 0.65rem 0.8rem; margin-bottom: 0.5rem;
+  }
+  .av-multi-item input[type=checkbox] { margin-top: 3px; flex-shrink: 0; accent-color: var(--copper); }
+  .av-multi-item-body { flex: 1; min-width: 0; }
+  .av-multi-item-name { font-family: var(--serif); font-size: 0.9rem; color: var(--text); }
+  .av-multi-item-meta { font-size: 0.72rem; color: var(--text3); margin-top: 0.15rem; }
+  .av-save-all-btn {
+    background: var(--copper); color: var(--bg); border: none;
+    border-radius: 3px; padding: 0.5rem 1.1rem; cursor: pointer;
+    font-family: var(--sans); font-size: 0.82rem; font-weight: 600;
+  }
 
   /* Inbox panel */
   .inbox-section {
@@ -2001,14 +2037,30 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
     <div class="av-modal">
       <button class="av-close-btn" onclick="closeAddVideo()">✕</button>
       <div class="av-modal-title">📱 Add from Instagram / TikTok</div>
+
       <div class="av-input-row">
         <input class="av-url-input" id="av-url" type="url"
           placeholder="Paste reel or video URL here…"
           onkeydown="if(event.key==='Enter') analyzeVideo()" />
         <button class="av-analyze-btn" id="av-btn" onclick="analyzeVideo()">Analyze</button>
       </div>
+
+      <div class="av-divider">or</div>
+
+      <input type="file" id="av-file" accept="image/*" style="display:none" onchange="onImageSelected(event)" />
+      <button class="av-upload-btn" onclick="document.getElementById('av-file').click()">📷 Upload screenshot</button>
+
+      <div style="margin-top:0.9rem">
+        <img class="av-preview" id="av-preview" alt="preview" />
+        <button class="av-analyze-btn" id="av-img-btn" style="display:none;width:100%;margin-bottom:0.7rem" onclick="analyzeImage()">Analyze Screenshot</button>
+      </div>
+
       <div class="av-status" id="av-status"></div>
 
+      <!-- Multi-result (screenshot) -->
+      <div class="av-multi-results" id="av-multi-results"></div>
+
+      <!-- Single result (URL) -->
       <div class="av-result" id="av-result">
         <div class="av-field">
           <label>Name / Place</label>
@@ -2101,7 +2153,98 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
     document.getElementById('av-url').value = '';
     document.getElementById('av-status').textContent = '';
     document.getElementById('av-result').classList.remove('visible');
+    document.getElementById('av-multi-results').classList.remove('visible');
+    document.getElementById('av-multi-results').innerHTML = '';
     document.getElementById('av-btn').disabled = false;
+    document.getElementById('av-img-btn').style.display = 'none';
+    document.getElementById('av-preview').classList.remove('visible');
+    document.getElementById('av-preview').src = '';
+    document.getElementById('av-file').value = '';
+  }
+
+  // ── Image selection ───────────────────────────────────────────────────────
+  let _imageBase64 = null;
+  let _imageMediaType = null;
+
+  function onImageSelected(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    _imageMediaType = file.type || 'image/jpeg';
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target.result;
+      _imageBase64 = dataUrl.split(',')[1];
+      const preview = document.getElementById('av-preview');
+      preview.src = dataUrl;
+      preview.classList.add('visible');
+      document.getElementById('av-img-btn').style.display = 'block';
+      document.getElementById('av-status').textContent = '';
+      document.getElementById('av-multi-results').classList.remove('visible');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ── Analyze image ─────────────────────────────────────────────────────────
+  async function analyzeImage() {
+    if (!_imageBase64) return;
+    const btn = document.getElementById('av-img-btn');
+    const status = document.getElementById('av-status');
+    btn.disabled = true;
+    status.textContent = '⏳ Analyzing screenshot…';
+    document.getElementById('av-multi-results').classList.remove('visible');
+
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: _imageBase64, mediaType: _imageMediaType })
+      });
+      const data = await res.json();
+
+      if (data.error) { status.textContent = `⚠️ ${data.error}`; btn.disabled = false; return; }
+
+      const results = data.results || [];
+      if (results.length === 0) {
+        status.textContent = '⚠️ No travel info found in this screenshot.';
+        btn.disabled = false;
+        return;
+      }
+
+      const container = document.getElementById('av-multi-results');
+      container.innerHTML = results.map((item, i) => `
+        <div class="av-multi-item">
+          <input type="checkbox" id="av-chk-${i}" checked>
+          <div class="av-multi-item-body">
+            <div class="av-multi-item-name">${item.name || '—'}</div>
+            <div class="av-multi-item-meta">${[item.country, item.city, item.category].filter(Boolean).join(' · ')}</div>
+            ${item.details ? `<div style="font-size:0.75rem;color:var(--text2);margin-top:0.15rem">${item.details}</div>` : ''}
+          </div>
+        </div>`).join('') +
+        `<div class="av-actions" style="margin-top:0.8rem">
+          <button class="av-cancel-btn" onclick="resetAnalysis()">Clear</button>
+          <button class="av-save-all-btn" onclick="saveAllToInbox(${JSON.stringify(results).replace(/"/g, '&quot;')})">Save Selected</button>
+        </div>`;
+      container.classList.add('visible');
+      status.textContent = `✅ Found ${results.length} place${results.length > 1 ? 's' : ''} — review and save.`;
+      btn.disabled = false;
+    } catch (e) {
+      status.textContent = '❌ Request failed. Check your connection and try again.';
+      btn.disabled = false;
+    }
+  }
+
+  // ── Save all checked items ────────────────────────────────────────────────
+  function saveAllToInbox(results) {
+    const items = getInbox();
+    results.forEach((item, i) => {
+      const chk = document.getElementById(`av-chk-${i}`);
+      if (chk && chk.checked) {
+        items.unshift({ ...item, addedAt: new Date().toISOString(), source: 'screenshot' });
+      }
+    });
+    saveInbox(items);
+    renderInbox();
+    closeAddVideo();
   }
 
   // ── Analyze ──────────────────────────────────────────────────────────────
