@@ -2357,7 +2357,22 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
 
       if (data.error) { finishProgress(false); status.textContent = `⚠️ ${data.message || data.error}`; btn.disabled = false; return; }
 
-      const results = data.results || [];
+      const raw_results = data.results || [];
+      // Deduplicate by name within the returned results
+      const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const seen = {};
+      const results = raw_results.filter(item => {
+        const key = norm(item.name);
+        if (seen[key]) {
+          if (item.details && item.details !== seen[key].details) {
+            seen[key].details = [seen[key].details, item.details].filter(Boolean).join(' · ');
+          }
+          return false;
+        }
+        seen[key] = item;
+        return true;
+      });
+
       if (results.length === 0) {
         finishProgress(false);
         status.textContent = '⚠️ No travel info found in these screenshots.';
