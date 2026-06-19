@@ -8,6 +8,7 @@ self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 
 self.addEventListener('fetch', event => {
-  // Pass all requests straight to the network
+  // Never intercept API calls — POST bodies can only be read once
+  if (event.request.url.includes('/api/')) return;
   event.respondWith(fetch(event.request));
 });
