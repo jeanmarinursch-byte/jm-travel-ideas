@@ -132,9 +132,10 @@ Return ONLY the deduplicated JSON array — no markdown, no explanation.`;
   }
 
   // ── URL PATH ──────────────────────────────────────────────────────────────
-  let metadata = `Source URL: ${url}\n`;
-  let metadataFields = 0;
+  let content = `Source URL: ${url}\n`;
+  let contentFields = 0;
   let fetchFailed = false;
+  const isSocial = /tiktok\.com|instagram\.com|facebook\.com/.test(url);
 
   try {
     if (url.includes('tiktok.com')) {
@@ -142,9 +143,9 @@ Return ONLY the deduplicated JSON array — no markdown, no explanation.`;
         `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`
       ).then(r => r.ok ? r.json() : null).catch(() => null);
       if (oembed) {
-        metadata += `Title: ${oembed.title || ''}\n`;
-        metadata += `Author: ${oembed.author_name || ''}\n`;
-        metadataFields += 2;
+        content += `Title: ${oembed.title || ''}\n`;
+        content += `Author: ${oembed.author_name || ''}\n`;
+        contentFields += 2;
       }
     }
 
@@ -166,9 +167,29 @@ Return ONLY the deduplicated JSON array — no markdown, no explanation.`;
                        || get(/content="([^"]+)"\s+property="og:description"/i)
                        || get(/name="description"\s+content="([^"]+)"/i);
       const siteName    = get(/property="og:site_name"\s+content="([^"]+)"/i);
-      if (title)       { metadata += `Title: ${title}\n`; metadataFields++; }
-      if (description) { metadata += `Description: ${description}\n`; metadataFields++; }
-      if (siteName)    { metadata += `Platform: ${siteName}\n`; metadataFields++; }
+      if (title)       { content += `Title: ${title}\n`; contentFields++; }
+      if (description) { content += `Description: ${description}\n`; contentFields++; }
+      if (siteName)    { content += `Site: ${siteName}\n`; contentFields++; }
+
+      // For non-social URLs (blogs, journals), extract readable body text
+      if (!isSocial) {
+        const bodyText = html
+          .replace(/<script[\s\S]*?<\/script>/gi, '')
+          .replace(/<style[\s\S]*?<\/style>/gi, '')
+          .replace(/<nav[\s\S]*?<\/nav>/gi, '')
+          .replace(/<header[\s\S]*?<\/header>/gi, '')
+          .replace(/<footer[\s\S]*?<\/footer>/gi, '')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s{2,}/g, ' ')
+          .trim();
+        // Take first ~4000 words to stay within token budget
+        const words = bodyText.split(' ');
+        const excerpt = words.slice(0, 4000).join(' ');
+        if (excerpt.length > 200) {
+          content += `\nPage content:\n${excerpt}\n`;
+          contentFields++;
+        }
+      }
     } else if (page && !page.ok) {
       return res.status(422).json({
         error: 'url_blocked',
@@ -182,30 +203,36 @@ Return ONLY the deduplicated JSON array — no markdown, no explanation.`;
     }
   } catch (_) {}
 
-  if (metadataFields === 0) {
+  if (contentFields === 0) {
     return res.status(422).json({
       error: 'no_metadata',
       message: 'No readable content found at this URL — it may be a short link, private post, or app-only link. Try uploading a screenshot instead.'
     });
   }
 
-  const SYSTEM = `You extract travel inspiration data from social media post metadata.
-Return ONLY a valid JSON object — no markdown fences, no explanation.
+  const SYSTEM = `You extract travel inspiration from web pages — including social media posts, travel blogs, and travel journals.
+Extract ALL distinct places, restaurants, activities, or experiences mentioned. For a blog post this may be many places; for a social post it may be just one.
+Return ONLY a valid JSON array — no markdown fences, no explanation.
 
 Known countries: ${COUNTRIES}
 Categories: ${CATEGORIES}
+  Food – restaurants, cafes, food markets, bakeries, street food
+  Drink – bars, coffee shops, rooftop bars, cocktail spots
+  Culture – museums, temples, monuments, architecture, historical sites, galleries, religious sites, musicals, theater, plays, opera, concerts, live music, DJ sets, festivals, performing arts venues
+  Activities – hiking, beaches, nature, sports, wellness, tours, day trips, wildlife sanctuaries, animal experiences, rescue centres, national parks, regional parks, nature reserves, protected areas, waterfalls, viewpoints, boat trips, water parks, amusement parks, theme parks, casinos, entertainment complexes
+  Shopping – boutiques, markets, department stores, souvenirs
+  Miscellaneous – anything else travel-related
 
-JSON schema:
+Each item:
 {
-  "name":       "specific place name, dish, or activity title",
-  "country":    "country from the known list, or null",
-  "city":       "city or district, or null",
-  "category":   "Food|Drink|Culture|Activities|Shopping|Miscellaneous",
-  "details":    "one concise sentence describing what was featured",
-  "confidence": "high|medium|low"
+  "name":     "specific place name or activity",
+  "country":  "from known list or null",
+  "city":     "city or district or null",
+  "category": "Food|Drink|Culture|Activities|Shopping|Miscellaneous",
+  "details":  "one concise sentence with the most useful info"
 }
 
-If no travel information can be found, return: {"error": "no travel info found"}`;
+If no travel information found, return: []`;
 
   try {
     const claude = await fetch('https://api.anthropic.com/v1/messages', {
@@ -217,9 +244,9 @@ If no travel information can be found, return: {"error": "no travel info found"}
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 400,
+        max_tokens: 2000,
         system: SYSTEM,
-        messages: [{ role: 'user', content: `Extract travel info from:\n\n${metadata}` }]
+        messages: [{ role: 'user', content: `Extract all travel places and activities from:\n\n${content}` }]
       })
     });
 
@@ -229,17 +256,17 @@ If no travel information can be found, return: {"error": "no travel info found"}
     }
 
     const claudeData = await claude.json();
-    const raw = claudeData.content?.[0]?.text || '{}';
-    const match = raw.match(/\{[\s\S]*\}/);
+    const raw = claudeData.content?.[0]?.text || '[]';
+    const match = raw.match(/\[[\s\S]*\]/);
     try {
-      const extracted = JSON.parse(match?.[0] || '{}');
-      if (extracted.error === 'no travel info found') {
+      const results = JSON.parse(match?.[0] || '[]');
+      if (!Array.isArray(results) || results.length === 0) {
         return res.status(422).json({
           error: 'no_travel_info',
-          message: 'No travel information found in this post. The content may not be travel-related. Try uploading a screenshot instead.'
+          message: 'No travel information found at this URL. The content may not be travel-related. Try uploading a screenshot instead.'
         });
       }
-      return res.status(200).json(extracted);
+      return res.status(200).json({ results });
     } catch {
       return res.status(500).json({
         error: 'parse_failed',

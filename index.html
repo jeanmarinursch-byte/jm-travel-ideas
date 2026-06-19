@@ -2596,20 +2596,39 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
         return;
       }
 
-      // Populate result form
-      document.getElementById('av-name').value     = data.name     || '';
-      document.getElementById('av-country').value  = data.country  || '';
-      document.getElementById('av-city').value     = data.city     || '';
-      document.getElementById('av-details').value  = data.details  || '';
-      const catEl = document.getElementById('av-category');
-      if (data.category) {
-        [...catEl.options].forEach(o => { o.selected = o.value === data.category; });
+      // Multi-result path (blogs, journals, and all URLs now return {results:[...]})
+      const results = data.results;
+      if (Array.isArray(results)) {
+        const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const seen = {};
+        const deduped = results.filter(item => {
+          const key = norm(item.name || '');
+          if (seen[key]) return false;
+          seen[key] = true;
+          return true;
+        });
+        const container = document.getElementById('av-multi-results');
+        container.innerHTML = deduped.map((item, i) => `
+          <div class="av-multi-item">
+            <input type="checkbox" id="av-chk-${i}" checked>
+            <div class="av-multi-item-body">
+              <div class="av-multi-item-name">${item.name || '—'}</div>
+              <div class="av-multi-item-meta">${[item.country, item.city, item.category].filter(Boolean).join(' · ')}</div>
+              ${item.details ? `<div style="font-size:0.75rem;color:var(--text2);margin-top:0.15rem">${item.details}</div>` : ''}
+            </div>
+          </div>`).join('') +
+          `<div class="av-actions" style="margin-top:0.8rem">
+            <button class="av-cancel-btn" onclick="resetAnalysis()">Clear</button>
+            <button class="av-save-all-btn" onclick="saveAllToTravel(${JSON.stringify(deduped).replace(/"/g, '&quot;')})">Save Selected</button>
+          </div>`;
+        container.classList.add('visible');
+        status.textContent = `✅ Found ${deduped.length} place${deduped.length !== 1 ? 's' : ''} — review and save.`;
+        btn.disabled = false;
+        return;
       }
-      document.getElementById('av-confidence').textContent =
-        data.confidence ? `Confidence: ${data.confidence}` : '';
 
-      status.textContent = '✅ Done — review and edit below, then save.';
-      document.getElementById('av-result').classList.add('visible');
+      status.textContent = '❌ Unexpected response. Please try again.';
+      btn.disabled = false;
     } catch (e) {
       status.textContent = '❌ Request failed. Check your connection and try again.';
       btn.disabled = false;
