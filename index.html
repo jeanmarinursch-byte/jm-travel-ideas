@@ -2188,43 +2188,64 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
     _images = [];
   }
 
+  // ── Image compression ─────────────────────────────────────────────────────
+  function compressImage(file) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+          const MAX = 1024;
+          let { width, height } = img;
+          if (width > MAX || height > MAX) {
+            if (width > height) { height = Math.round(height * MAX / width); width = MAX; }
+            else { width = Math.round(width * MAX / height); height = MAX; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width; canvas.height = height;
+          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+          resolve({ data: dataUrl.split(',')[1], mediaType: 'image/jpeg' });
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   // ── Image selection ───────────────────────────────────────────────────────
   let _images = []; // [{data, mediaType}]
   const MAX_IMAGES = 10;
 
-  function onImagesSelected(e) {
-    const files = Array.from(e.target.files).slice(0, 20);
+  async function onImagesSelected(e) {
+    const files = Array.from(e.target.files);
+    const status = document.getElementById('av-status');
     if (files.length > MAX_IMAGES) {
-      document.getElementById('av-status').textContent = `⚠️ ${files.length} screenshots selected — only the first ${MAX_IMAGES} will be analyzed.`;
+      status.textContent = `⚠️ ${files.length} selected — only the first ${MAX_IMAGES} will be analyzed.`;
     } else {
-      document.getElementById('av-status').textContent = '';
+      status.textContent = '';
     }
     const limited = files.slice(0, MAX_IMAGES);
     _images = [];
     const previews = document.getElementById('av-previews');
     const countEl = document.getElementById('av-preview-count');
     previews.innerHTML = '';
+    countEl.textContent = 'Compressing…';
+    document.getElementById('av-img-btn').style.display = 'none';
+    document.getElementById('av-multi-results').classList.remove('visible');
 
-    let loaded = 0;
-    limited.forEach((file, i) => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const dataUrl = ev.target.result;
-        _images[i] = { data: dataUrl.split(',')[1], mediaType: file.type || 'image/jpeg' };
-        const img = document.createElement('img');
-        img.src = dataUrl;
-        img.className = 'av-preview-thumb';
-        img.title = file.name;
-        previews.appendChild(img);
-        loaded++;
-        if (loaded === limited.length) {
-          countEl.textContent = `${limited.length} screenshot${limited.length > 1 ? 's' : ''} selected`;
-          document.getElementById('av-img-btn').style.display = 'block';
-          document.getElementById('av-multi-results').classList.remove('visible');
-        }
-      };
-      reader.readAsDataURL(file);
+    _images = await Promise.all(limited.map(file => compressImage(file)));
+
+    _images.forEach((img, i) => {
+      const el = document.createElement('img');
+      el.src = 'data:image/jpeg;base64,' + img.data;
+      el.className = 'av-preview-thumb';
+      el.title = limited[i].name;
+      previews.appendChild(el);
     });
+
+    countEl.textContent = `${limited.length} screenshot${limited.length > 1 ? 's' : ''} selected`;
+    document.getElementById('av-img-btn').style.display = 'block';
   }
 
   // ── Analyze image(s) ─────────────────────────────────────────────────────
