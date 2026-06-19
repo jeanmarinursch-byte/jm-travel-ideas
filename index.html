@@ -1113,10 +1113,10 @@ document.getElementById('pw-input').addEventListener('keydown', e => {
 });
 
 // ── NAV ──
-function setHeader(title, showBack, showHome) {
+function setHeader(title, showBack, showHomeBtn) {
   document.getElementById('header-title').innerHTML = title;
   document.getElementById('back-btn').classList.toggle('hidden', !showBack);
-  document.getElementById('home-btn').classList.toggle('hidden', !showHome);
+  document.getElementById('home-btn').classList.toggle('hidden', !showHomeBtn);
 }
 
 function showView(id) {
