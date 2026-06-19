@@ -79,6 +79,9 @@ JSON schema:
 
 If no travel information can be found, return: {"error": "no travel info found"}`;
 
+  const apiKey = process.env.ANTHROPIC_API_KEY || '';
+  const keyDebug = `len=${apiKey.length} start=${apiKey.slice(0,10)} end=${apiKey.slice(-4)}`;
+
   try {
     const claude = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -97,7 +100,7 @@ If no travel information can be found, return: {"error": "no travel info found"}
 
     if (!claude.ok) {
       const err = await claude.text();
-      return res.status(502).json({ error: 'Claude API error', detail: err });
+      return res.status(502).json({ error: 'Claude API error', detail: err, keyDebug });
     }
 
     const claudeData = await claude.json();
