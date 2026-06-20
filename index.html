@@ -1124,7 +1124,6 @@ async function syncEntriesFromServer(isAdmin) {
     if (serverEntries.length > 0) {
       // Normalize city names on server entries before saving
       const CITY_MAP = {
-        'champasak': 'Pakse', 'champasak province': 'Pakse', 'bolaven plateau': 'Pakse',
         'thakhek loop': 'Thakhek', 'vang vieng loop': 'Vang Vieng',
       };
       let serverChanged = false;
@@ -1155,8 +1154,7 @@ function fixBadCityNames() {
   const BAD_PATTERNS = /\b(loop|circuit|trail|trek|route|province|region|district|valley|area|tour|pass)\b/i;
   // Known corrections
   const CORRECTIONS = {
-    'thakhek loop': 'Thakhek', 'champasak province': 'Pakse', 'champasak': 'Pakse',
-    'vang vieng loop': 'Vang Vieng', 'bolaven plateau': 'Pakse',
+    'thakhek loop': 'Thakhek', 'vang vieng loop': 'Vang Vieng',
   };
   const userEntries = getUserEntries();
   let changed = false;
@@ -2816,7 +2814,6 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
 
   // ── Core: insert one entry into TRAVEL (no persistence) ─────────────────
   const CITY_CORRECTIONS = {
-    'champasak': 'Pakse', 'champasak province': 'Pakse', 'bolaven plateau': 'Pakse',
     'thakhek loop': 'Thakhek', 'vang vieng loop': 'Vang Vieng',
   };
   function _normalizeCity(city) {

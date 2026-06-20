@@ -48,7 +48,7 @@ Each item in the array:
 {
   "name": "place name, landmark, or activity — include descriptive activities like 'Explore the Old Town', 'Night market visit', 'Sunrise hike' if no specific name is given",
   "country": "from known list or null",
-  "city": "the actual city or town name (nearest real city, not an activity or route name) or null",
+  "city": "the city where a traveller would base themselves — for day trips use the departure city, not the destination. Use real city names, not route or region names. Null if unknown.",
   "category": "Food|Drink|Culture|Activities|Shopping|Stays|Miscellaneous",
   "details": "one concise sentence combining all relevant info"
 }
@@ -245,7 +245,7 @@ Each item:
 {
   "name":     "specific place name or activity",
   "country":  "from known list or null",
-  "city":     "the actual city or town name (e.g. 'Thakhek', not 'Thakhek Loop'; 'Champasak', not 'Champasak Province') — use the nearest real city, or null if unknown",
+  "city":     "the city or town where a traveller would BASE themselves to visit this place. For day trips, use the departure city (e.g. if a blog says 'day trip from Pakse to Wat Phou', use 'Pakse'). Use the actual city name, not a route or region name (e.g. 'Thakhek' not 'Thakhek Loop', 'Luang Prabang' not 'Northern Laos'). Null if unknown.",
   "category": "Food|Drink|Culture|Activities|Shopping|Stays|Miscellaneous",
   "details":  "one concise sentence with the most useful info"
 }
