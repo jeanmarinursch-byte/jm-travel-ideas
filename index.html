@@ -1149,17 +1149,31 @@ function _namesMatch(a, b) {
 function deduplicateTravel() {
   Object.values(TRAVEL).forEach(country => {
     country.cities.forEach(city => {
+      // Build a flat list of all entries across all categories to detect cross-category dups
+      const seen = []; // { name, cat }
       Object.keys(city.categories).forEach(cat => {
         const deduped = [];
         city.categories[cat].forEach(entry => {
-          const existing = deduped.find(e => _namesMatch(e.name, entry.name));
-          if (existing) {
-            if (entry.details && entry.details !== existing.details) {
-              existing.details = [existing.details, entry.details].filter(Boolean).join(' · ');
+          // Check within this category
+          const inCat = deduped.find(e => _namesMatch(e.name, entry.name));
+          if (inCat) {
+            const normD = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (entry.details && normD(entry.details) !== normD(inCat.details)) {
+              inCat.details = [inCat.details, entry.details].filter(Boolean).join(' · ');
             }
-          } else {
-            deduped.push(entry);
+            return;
           }
+          // Check across other categories in this city
+          const inOtherCat = seen.find(e => _namesMatch(e.name, entry.name));
+          if (inOtherCat) {
+            const normD = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (entry.details && normD(entry.details) !== normD(inOtherCat.details)) {
+              inOtherCat.details = [inOtherCat.details, entry.details].filter(Boolean).join(' · ');
+            }
+            return; // skip — already exists in another category
+          }
+          deduped.push(entry);
+          seen.push(entry);
         });
         city.categories[cat] = deduped;
       });
