@@ -18,7 +18,7 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.ANTHROPIC_API_KEY || '';
 
-  const CATEGORIES = `Food, Drink, Culture, Activities, Shopping, Stays, Miscellaneous`;
+  const CATEGORIES = `Food, Drink, Culture, Activities, Day Trips, Shopping, Stays, Miscellaneous`;
   const COUNTRIES = `Albania, Argentina, Bolivia, Chile, China, Hong Kong, Hungary, India, Indonesia, Italy, Japan, Kyrgyzstan, Laos, Malaysia, Mexico, Morocco, New York, Norway, Peru, Poland, Portugal, Slovenia, South Korea, Spain, Taiwan, Tajikistan, Thailand, USA, Uzbekistan`;
 
   // ── IMAGE PATH (single or multiple) ──────────────────────────────────────
@@ -238,6 +238,7 @@ Categories: ${CATEGORIES}
   Culture – museums, temples, monuments, architecture, historical sites, galleries, religious sites, musicals, theater, plays, opera, concerts, live music, DJ sets, festivals, performing arts venues
   Activities – hiking, beaches, nature, sports, wellness, tours, day trips, wildlife sanctuaries, animal experiences, rescue centres, national parks, regional parks, nature reserves, protected areas, waterfalls, viewpoints, boat trips, water parks, amusement parks, theme parks, casinos, entertainment complexes
   Shopping – boutiques, markets, department stores, souvenirs
+  Day Trips – excursions from the base city to a nearby site (temples, waterfalls, villages, islands, parks) where you return the same day
   Stays – hotels, guesthouses, hostels, resorts, lodges, villas, homestays, riads, ryokans — anything the blog recommends sleeping at
   Miscellaneous – anything else travel-related
 
