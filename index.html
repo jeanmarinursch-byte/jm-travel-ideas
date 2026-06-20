@@ -2653,7 +2653,7 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
 
     container.innerHTML = annotated.map((item, i) => `
       <div class="av-multi-item${item._exists ? ' av-multi-exists' : ''}">
-        <input type="checkbox" id="av-chk-${i}" ${item._exists ? 'disabled' : 'checked'}>
+        <input type="checkbox" id="av-chk-${i}" ${item._exists ? ((_session?.role === 'guest') ? 'disabled' : 'checked') : 'checked'}>
         <div class="av-multi-item-body">
           <div class="av-multi-item-name">${item.name || '—'}${item._exists ? ' <span class="av-exists-tag">already in list</span>' : ''}</div>
           <div class="av-multi-item-meta">${[item.country, item.city, item.category].filter(Boolean).join(' · ')}</div>
