@@ -1,4 +1,4 @@
-import { list, head } from '@vercel/blob';
+import { list } from '@vercel/blob';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -10,9 +10,8 @@ export default async function handler(req, res) {
     const { blobs } = await list({ prefix: 'travel-entries.json' });
     if (!blobs.length) return res.status(200).json({ entries: [] });
 
-    // Private blobs need a signed downloadUrl — regular url is not publicly accessible
-    const blob = await head(blobs[0].url);
-    const dataRes = await fetch(blob.downloadUrl);
+    // v2.x list() returns downloadUrl directly (signed URL for private blobs)
+    const dataRes = await fetch(blobs[0].downloadUrl);
     if (!dataRes.ok) return res.status(200).json({ entries: [] });
     const entries = await dataRes.json();
     return res.status(200).json({ entries });
