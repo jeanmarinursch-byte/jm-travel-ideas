@@ -28,6 +28,7 @@ export default async function handler(req, res) {
         'authorization': `Bearer ${token}`,
         'x-api-version': '7',
         'content-type': 'application/json',
+        'x-vercel-blob-access': 'private',
         'x-cache-control-max-age': '0',
       },
       body,
