@@ -71,8 +71,8 @@ If no travel info found, return: []`;
           'content-type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 2000,
+          model: 'claude-sonnet-4-6',
+          max_tokens: 4000,
           system: SYSTEM,
           messages: [{
             role: 'user',
@@ -121,8 +121,8 @@ Return ONLY the deduplicated JSON array — no markdown, no explanation.`;
               'content-type': 'application/json'
             },
             body: JSON.stringify({
-              model: 'claude-haiku-4-5-20251001',
-              max_tokens: 2000,
+              model: 'claude-sonnet-4-6',
+              max_tokens: 4000,
               system: DEDUP_SYSTEM,
               messages: [{ role: 'user', content: JSON.stringify(results) }]
             })

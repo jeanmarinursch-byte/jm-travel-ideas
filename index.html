@@ -2542,7 +2542,7 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
       reader.onload = (ev) => {
         const img = new Image();
         img.onload = () => {
-          const MAX = 1024;
+          const MAX = 1568;
           let { width, height } = img;
           if (width > MAX || height > MAX) {
             if (width > height) { height = Math.round(height * MAX / width); width = MAX; }
@@ -2551,7 +2551,7 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
           const canvas = document.createElement('canvas');
           canvas.width = width; canvas.height = height;
           canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
           resolve({ data: dataUrl.split(',')[1], mediaType: 'image/jpeg' });
         };
         img.src = ev.target.result;
