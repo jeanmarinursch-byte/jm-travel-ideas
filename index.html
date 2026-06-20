@@ -1122,7 +1122,23 @@ async function syncEntriesFromServer(isAdmin) {
 
     // Pull: server is the source of truth — replace local with server entries
     if (serverEntries.length > 0) {
+      // Normalize city names on server entries before saving
+      const CITY_MAP = {
+        'champasak': 'Pakse', 'champasak province': 'Pakse', 'bolaven plateau': 'Pakse',
+        'thakhek loop': 'Thakhek', 'vang vieng loop': 'Vang Vieng',
+      };
+      let serverChanged = false;
+      serverEntries.forEach(e => {
+        if (e.city) {
+          const corrected = CITY_MAP[e.city.toLowerCase().trim()];
+          if (corrected) { e.city = corrected; serverChanged = true; }
+        }
+      });
       localStorage.setItem(USER_ENTRIES_KEY, JSON.stringify(serverEntries));
+      // Push corrected data back to server if any cities were fixed
+      if (serverChanged) {
+        fetch('/api/entries-put', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ entries: serverEntries }) }).catch(() => {});
+      }
       // Insert any server entries not already in TRAVEL (from the hardcoded base)
       const localNames = new Set(localEntries.map(e => e.name?.toLowerCase().trim()));
       const newFromServer = serverEntries.filter(e => !localNames.has(e.name?.toLowerCase().trim()));
