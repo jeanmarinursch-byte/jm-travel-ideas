@@ -21,7 +21,7 @@ export default async function handler(req, res) {
 
   try {
     await put('travel-entries.json', JSON.stringify(safe), {
-      access: 'private',
+      access: 'public',
       contentType: 'application/json',
       addRandomSuffix: false,
     });
