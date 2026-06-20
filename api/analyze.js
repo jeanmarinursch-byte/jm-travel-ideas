@@ -48,7 +48,7 @@ Each item in the array:
 {
   "name": "place name, landmark, or activity — include descriptive activities like 'Explore the Old Town', 'Night market visit', 'Sunrise hike' if no specific name is given",
   "country": "from known list or null",
-  "city": "city or district or null",
+  "city": "the actual city or town name (nearest real city, not an activity or route name) or null",
   "category": "Food|Drink|Culture|Activities|Shopping|Stays|Miscellaneous",
   "details": "one concise sentence combining all relevant info"
 }
@@ -244,7 +244,7 @@ Each item:
 {
   "name":     "specific place name or activity",
   "country":  "from known list or null",
-  "city":     "city or district or null",
+  "city":     "the actual city or town name (e.g. 'Thakhek', not 'Thakhek Loop'; 'Champasak', not 'Champasak Province') — use the nearest real city, or null if unknown",
   "category": "Food|Drink|Culture|Activities|Shopping|Stays|Miscellaneous",
   "details":  "one concise sentence with the most useful info"
 }
