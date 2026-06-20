@@ -1209,6 +1209,7 @@ async function checkPassword() {
       }
       showHome();
       syncEntriesFromServer(data.role === 'admin');
+      _geocodeMissingCities();
     } else {
       err.textContent = data.message || 'Incorrect password';
       inp.classList.remove('shake');
@@ -2729,6 +2730,32 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
   }
 
 
+  // ── Geocode a city using OpenStreetMap Nominatim ─────────────────────────
+  async function _geocodeCity(cityObj, city, country) {
+    try {
+      const q = encodeURIComponent(`${city}, ${country}`);
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`, {
+        headers: { 'Accept-Language': 'en', 'User-Agent': 'BonVentTravelApp/1.0' }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.length > 0) {
+        cityObj.coords = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+      }
+    } catch (_) {}
+  }
+
+  async function _geocodeMissingCities() {
+    for (const [countryName, countryObj] of Object.entries(TRAVEL)) {
+      for (const city of countryObj.cities) {
+        if (city.coords[0] === 0 && city.coords[1] === 0) {
+          await _geocodeCity(city, city.name, countryName);
+          await new Promise(r => setTimeout(r, 300)); // respect Nominatim rate limit
+        }
+      }
+    }
+  }
+
   // ── Core: insert one entry into TRAVEL (no persistence) ─────────────────
   function _insertIntoTravel(item) {
     const country  = (item.country || '').trim();
@@ -2743,6 +2770,7 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
     if (!cityObj) {
       cityObj = { name: city, coords: [0, 0], categories: {} };
       TRAVEL[country].cities.push(cityObj);
+      _geocodeCity(cityObj, city, country);
     }
     if (!cityObj.categories[category]) cityObj.categories[category] = [];
 
