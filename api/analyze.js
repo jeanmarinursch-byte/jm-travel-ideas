@@ -163,8 +163,9 @@ Return ONLY the deduplicated JSON array — no markdown, no explanation.`;
 
     const page = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
-        'Accept-Language': 'en-US,en;q=0.9'
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
       },
       redirect: 'follow'
     }).catch(() => { fetchFailed = true; return null; });
@@ -256,7 +257,7 @@ If no travel information found, return: []`;
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 2000,
+        max_tokens: 4000,
         system: SYSTEM,
         messages: [{ role: 'user', content: `Extract all travel places and activities from:\n\n${content}` }]
       })
