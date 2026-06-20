@@ -161,18 +161,28 @@ Return ONLY the deduplicated JSON array — no markdown, no explanation.`;
       }
     }
 
-    const fetchUrl = isSocial ? url : `https://r.jina.ai/${url}`;
-    const page = await fetch(fetchUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,text/plain,*/*'
-      },
-      redirect: 'follow'
-    }).catch(() => { fetchFailed = true; return null; });
+    const fetchHeaders = {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'text/html,text/plain,*/*',
+      'Accept-Language': 'en-US,en;q=0.9'
+    };
+
+    // Try direct fetch first, then Jina Reader as fallback for non-social URLs
+    let page = await fetch(url, { headers: fetchHeaders, redirect: 'follow' })
+      .catch(() => null);
+
+    let usedJina = false;
+    if (!isSocial && (!page || !page.ok)) {
+      page = await fetch(`https://r.jina.ai/${url}`, { headers: fetchHeaders, redirect: 'follow' })
+        .catch(() => null);
+      usedJina = true;
+    }
+
+    if (!page) { fetchFailed = true; }
 
     if (page && page.ok) {
       const text = await page.text();
-      if (isSocial) {
+      if (isSocial || !usedJina) {
         const get = (pattern) => text.match(pattern)?.[1]?.trim() || '';
         const title       = get(/property="og:title"\s+content="([^"]+)"/i)
                          || get(/content="([^"]+)"\s+property="og:title"/i)
@@ -184,19 +194,24 @@ Return ONLY the deduplicated JSON array — no markdown, no explanation.`;
         if (title)       { content += `Title: ${title}\n`; contentFields++; }
         if (description) { content += `Description: ${description}\n`; contentFields++; }
         if (siteName)    { content += `Site: ${siteName}\n`; contentFields++; }
+        if (!isSocial) {
+          const bodyText = text
+            .replace(/<script[\s\S]*?<\/script>/gi, '')
+            .replace(/<style[\s\S]*?<\/style>/gi, '')
+            .replace(/<nav[\s\S]*?<\/nav>/gi, '')
+            .replace(/<header[\s\S]*?<\/header>/gi, '')
+            .replace(/<footer[\s\S]*?<\/footer>/gi, '')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/\s{2,}/g, ' ')
+            .trim();
+          const excerpt = bodyText.split(' ').slice(0, 4000).join(' ');
+          if (excerpt.length > 200) { content += `\nPage content:\n${excerpt}\n`; contentFields++; }
+        }
       } else {
         // Jina Reader returns clean markdown text
         const excerpt = text.slice(0, 16000);
-        if (excerpt.length > 200) {
-          content += `\nPage content:\n${excerpt}\n`;
-          contentFields++;
-        }
+        if (excerpt.length > 200) { content += `\nPage content:\n${excerpt}\n`; contentFields++; }
       }
-    } else if (page && !page.ok) {
-      return res.status(422).json({
-        error: 'url_blocked',
-        message: `Could not read this URL (${page.status}). Try uploading a screenshot instead.`
-      });
     } else if (fetchFailed) {
       return res.status(422).json({
         error: 'url_unreachable',
