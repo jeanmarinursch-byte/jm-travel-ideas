@@ -11,10 +11,12 @@ export default async function handler(req, res) {
   if (!Array.isArray(entries)) return res.status(400).json({ error: 'entries must be an array' });
 
   try {
+    const token = process.env.BLOB_READ_WRITE_TOKEN;
     await put('travel-entries.json', JSON.stringify(entries), {
-      access: 'public',
+      access: 'private',
       contentType: 'application/json',
-      allowOverwrite: true
+      allowOverwrite: true,
+      token
     });
     return res.status(200).json({ ok: true });
   } catch (e) {
