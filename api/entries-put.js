@@ -10,9 +10,18 @@ export default async function handler(req, res) {
   const { entries } = req.body || {};
   if (!Array.isArray(entries)) return res.status(400).json({ error: 'entries must be an array' });
 
+  // Strip to only allowed travel fields — no PII, no financial data, ever
+  const safe = entries.map(e => ({
+    name:     String(e.name     || '').slice(0, 200),
+    country:  String(e.country  || '').slice(0, 100),
+    city:     String(e.city     || '').slice(0, 100),
+    category: String(e.category || '').slice(0, 50),
+    details:  String(e.details  || '').slice(0, 500),
+  }));
+
   try {
-    await put('travel-entries.json', JSON.stringify(entries), {
-      access: 'private',
+    await put('travel-entries.json', JSON.stringify(safe), {
+      access: 'public',
       contentType: 'application/json',
       addRandomSuffix: false,
     });
