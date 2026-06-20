@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   try {
     const token = process.env.BLOB_READ_WRITE_TOKEN;
     await put('travel-entries.json', JSON.stringify(entries), {
-      access: 'private',
+      access: 'public',
       contentType: 'application/json',
       allowOverwrite: true,
       token

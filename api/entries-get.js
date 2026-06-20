@@ -1,4 +1,4 @@
-import { list, download } from '@vercel/blob';
+import { list } from '@vercel/blob';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -12,9 +12,9 @@ export default async function handler(req, res) {
     const { blobs } = await list({ prefix: 'travel-entries.json', token });
     if (!blobs.length) return res.status(200).json({ entries: [] });
 
-    const blob = await download(blobs[0].url, { token });
-    const text = await blob.text();
-    const entries = JSON.parse(text);
+    const dataRes = await fetch(blobs[0].url);
+    if (!dataRes.ok) return res.status(200).json({ entries: [] });
+    const entries = await dataRes.json();
     return res.status(200).json({ entries });
   } catch (e) {
     return res.status(500).json({ error: e.message });
