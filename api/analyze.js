@@ -41,15 +41,15 @@ Categories: ${CATEGORIES}
   Culture – museums, temples, monuments, architecture, historical sites, galleries, religious sites, musicals, theater, plays, opera, concerts, live music, DJ sets, festivals, performing arts venues
   Activities – hiking, beaches, nature, sports, wellness, tours, day trips, wildlife sanctuaries, animal experiences, rescue centres, national parks, regional parks, nature reserves, protected areas, waterfalls, viewpoints, boat trips, water parks, amusement parks, theme parks, casinos, entertainment complexes
   Shopping – boutiques, markets, department stores, souvenirs
-  Stays – hotels, guesthouses, hostels, ryokans, riads, resorts, lodges, villas, homestays
+  Stays – hotels, guesthouses, hostels, ryokans, riads, resorts, lodges, villas, homestays. Also use Stays when a post recommends spending the night somewhere (an island, village, town) even without a specific accommodation name.
   Miscellaneous – anything else travel-related that doesn't fit above
 
 Each item in the array:
 {
   "name": "place name, landmark, or activity — include descriptive activities like 'Explore the Old Town', 'Night market visit', 'Sunrise hike' if no specific name is given",
   "country": "from known list or null",
-  "city": "the city where a traveller would base themselves — for day trips use the departure city, not the destination. Use real city names, not route or region names. Null if unknown.",
-  "category": "Food|Drink|Culture|Activities|Shopping|Stays|Miscellaneous",
+  "city": "the city where a traveller would base themselves — for day trips use the departure city, not the destination. For overnight stays at an island or village, use that destination as the city. Use real city names, not route or region names. Null if unknown.",
+  "category": "Food|Drink|Culture|Activities|Shopping|Day Trips|Stays|Miscellaneous",
   "details": "one concise sentence combining all relevant info"
 }
 
@@ -239,15 +239,15 @@ Categories: ${CATEGORIES}
   Activities – hiking, beaches, nature, sports, wellness, tours, day trips, wildlife sanctuaries, animal experiences, rescue centres, national parks, regional parks, nature reserves, protected areas, waterfalls, viewpoints, boat trips, water parks, amusement parks, theme parks, casinos, entertainment complexes
   Shopping – boutiques, markets, department stores, souvenirs
   Day Trips – excursions from the base city to a nearby site (temples, waterfalls, villages, islands, parks) where you return the same day
-  Stays – hotels, guesthouses, hostels, resorts, lodges, villas, homestays, riads, ryokans — anything the blog recommends sleeping at
+  Stays – hotels, guesthouses, hostels, resorts, lodges, villas, homestays, riads, ryokans — anything the blog recommends sleeping at. ALSO use Stays when the blog recommends spending the night in a town, island, or village (e.g. "spend a night on Don Det", "stay in the 4000 Islands", "sleep in a floating bungalow") even if no specific accommodation name is given. Use the destination itself as the entry name in that case.
   Miscellaneous – anything else travel-related
 
 Each item:
 {
-  "name":     "specific place name or activity",
+  "name":     "specific place name, accommodation, or destination the blog recommends staying at",
   "country":  "from known list or null",
-  "city":     "the city or town where a traveller would BASE themselves to visit this place. For day trips, use the departure city (e.g. if a blog says 'day trip from Pakse to Wat Phou', use 'Pakse'). Use the actual city name, not a route or region name (e.g. 'Thakhek' not 'Thakhek Loop', 'Luang Prabang' not 'Northern Laos'). Null if unknown.",
-  "category": "Food|Drink|Culture|Activities|Shopping|Stays|Miscellaneous",
+  "city":     "the city or town where a traveller would BASE themselves to visit this place. For day trips, use the departure city (e.g. if a blog says 'day trip from Pakse to Wat Phou', use 'Pakse'). For overnight stays at a destination (island, village, town), use that destination as the city (e.g. 'Don Det', 'Muang Ngoi'). Use the actual city name, not a route or region name (e.g. 'Thakhek' not 'Thakhek Loop', 'Luang Prabang' not 'Northern Laos'). Null if unknown.",
+  "category": "Food|Drink|Culture|Activities|Shopping|Day Trips|Stays|Miscellaneous",
   "details":  "one concise sentence with the most useful info"
 }
 
