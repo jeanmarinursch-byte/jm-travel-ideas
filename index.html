@@ -363,6 +363,16 @@
     color: var(--text2);
     line-height: 1.5;
   }
+  .entry-edit-btn {
+    background: none; border: none; cursor: pointer; font-size: 0.75rem;
+    color: var(--text3); padding: 0 0 0 6px; opacity: 0.5;
+  }
+  .entry-edit-btn:hover { opacity: 1; }
+  .entry-details-input {
+    width: 100%; font-size: 0.8rem; color: var(--text2); background: var(--card2);
+    border: 1px solid var(--copper); border-radius: 4px; padding: 4px 6px;
+    font-family: inherit; line-height: 1.5; resize: vertical;
+  }
   .entry-hours-btn {
     background: none; border: 1px solid var(--border); border-radius: 3px;
     color: var(--text3); font-size: 0.68rem; padding: 2px 7px;
@@ -2214,7 +2224,7 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
       const prideFlag = isLgbtq ? ' <span title="LGBTQ+ venue">🏳️‍🌈</span>' : '';
       card.innerHTML = `
         <div class="entry-name">${e.name}${prideFlag}</div>
-        ${e.details ? `<div class="entry-details">${e.details}</div>` : ''}
+        ${e.details ? `<div class="entry-details">${e.details}${_session?.role === 'admin' ? `<button class="entry-edit-btn" onclick="editEntryDetails(this, ${JSON.stringify(currentCountry)}, ${JSON.stringify(currentCity || '')}, ${JSON.stringify(cat)}, ${JSON.stringify(e.name)})">✏️</button>` : ''}</div>` : ''}
         ${isCulture ? `<button class="entry-hours-btn" onclick="fetchHours(this, ${JSON.stringify(e.name)}, ${JSON.stringify(currentCity || '')}, ${JSON.stringify(currentCountry || '')})">🕐 Check opening hours</button>` : ''}
         <div class="entry-hours" style="display:none"></div>`;
       list.appendChild(card);
@@ -2709,7 +2719,8 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
 
     const existing = cityObj.categories[category].find(e => _namesMatch(e.name, entry.name));
     if (existing) {
-      if (entry.details && entry.details !== existing.details) {
+      const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (entry.details && norm(entry.details) !== norm(existing.details)) {
         existing.details = [existing.details, entry.details].filter(Boolean).join(' · ');
       }
     } else {
@@ -2856,6 +2867,43 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
 
 
   <script>
+  // ── Edit entry details ───────────────────────────────────────────────────
+  function editEntryDetails(btn, country, city, category, name) {
+    const detailsDiv = btn.parentElement;
+    const current = detailsDiv.childNodes[0].textContent.trim();
+    const ta = document.createElement('textarea');
+    ta.className = 'entry-details-input';
+    ta.value = current;
+    ta.rows = 3;
+    detailsDiv.replaceWith(ta);
+    ta.focus();
+    ta.select();
+    const save = () => {
+      const newDetails = ta.value.trim();
+      // Update in TRAVEL
+      const countryObj = TRAVEL[country];
+      if (countryObj) {
+        for (const c of countryObj.cities) {
+          if (!city || c.name === city) {
+            const entries = c.categories[category] || [];
+            const entry = entries.find(e => e.name === name);
+            if (entry) { entry.details = newDetails; break; }
+          }
+        }
+      }
+      // Update in user entries
+      const userEntries = getUserEntries();
+      const ue = userEntries.find(e => e.name === name && e.country === country);
+      if (ue) ue.details = newDetails;
+      localStorage.setItem(USER_ENTRIES_KEY, JSON.stringify(userEntries));
+      fetch('/api/entries-put', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ entries: userEntries }) }).catch(() => {});
+      // Re-render
+      showCountry(country);
+    };
+    ta.addEventListener('blur', save);
+    ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ta.blur(); } });
+  }
+
   // ── PWA Service Worker ────────────────────────────────────────────────────
   // ── Opening hours lookup ──────────────────────────────────────────────────
   async function fetchHours(btn, name, city, country) {
