@@ -378,7 +378,20 @@
   .entry-details-input {
     width: 100%; font-size: 0.8rem; color: var(--text2); background: var(--card2);
     border: 1px solid var(--copper); border-radius: 4px; padding: 4px 6px;
-    font-family: inherit; line-height: 1.5; resize: vertical;
+    font-family: inherit; line-height: 1.5; resize: vertical; box-sizing: border-box;
+  }
+  .entry-edit-panel {
+    display: flex; flex-direction: column; gap: 3px; margin-top: 8px;
+    background: var(--card2); border: 1px solid var(--copper); border-radius: 6px; padding: 10px;
+  }
+  .entry-edit-city {
+    font-size: 0.8rem; color: var(--text2); background: var(--card);
+    border: 1px solid var(--copper); border-radius: 4px; padding: 4px 6px;
+    font-family: inherit; width: 100%; box-sizing: border-box;
+  }
+  .entry-edit-save-btn {
+    margin-top: 6px; align-self: flex-end; background: var(--copper); color: #fff;
+    border: none; border-radius: 4px; padding: 5px 14px; cursor: pointer; font-size: 0.8rem;
   }
   .entry-hours-btn {
     background: none; border: 1px solid var(--border); border-radius: 3px;
@@ -1121,6 +1134,33 @@ async function syncEntriesFromServer(isAdmin) {
   } catch (_) {}
 }
 
+function fixBadCityNames() {
+  // Patterns that indicate an activity/route was used as a city name
+  const BAD_PATTERNS = /\b(loop|circuit|trail|trek|route|province|region|district|valley|area|tour|pass)\b/i;
+  // Known corrections
+  const CORRECTIONS = {
+    'thakhek loop': 'Thakhek', 'champasak province': 'Champasak',
+    'vang vieng loop': 'Vang Vieng', 'bolaven plateau': 'Pakse',
+  };
+  const userEntries = getUserEntries();
+  let changed = false;
+  userEntries.forEach(e => {
+    if (!e.city) return;
+    const lower = e.city.toLowerCase().trim();
+    if (CORRECTIONS[lower]) {
+      e.city = CORRECTIONS[lower]; changed = true;
+    } else if (BAD_PATTERNS.test(e.city)) {
+      // Strip the bad part — take the first real word
+      e.city = e.city.replace(BAD_PATTERNS, '').replace(/\s+/g, ' ').trim() || null;
+      changed = true;
+    }
+  });
+  if (changed) {
+    localStorage.setItem(USER_ENTRIES_KEY, JSON.stringify(userEntries));
+    fetch('/api/entries-put', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ entries: userEntries }) }).catch(() => {});
+  }
+}
+
 function migrateInbox() {
   const INBOX_KEY = 'jm_travel_inbox';
   try {
@@ -1202,9 +1242,11 @@ async function checkPassword() {
       document.getElementById('app').style.display = 'block';
       if (data.role === 'admin') {
         migrateInbox();
+        fixBadCityNames();
         mergeUserEntries();
         deduplicateTravel();
       } else {
+        fixBadCityNames();
         mergeUserEntries();
       }
       showHome();
@@ -2953,38 +2995,48 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
 
   // ── Edit entry details ───────────────────────────────────────────────────
   function editEntryDetails(btn, country, city, category, name, current) {
-    const detailsDiv = btn.parentElement;
-    const ta = document.createElement('textarea');
-    ta.className = 'entry-details-input';
-    ta.value = current;
-    ta.rows = 3;
-    detailsDiv.replaceWith(ta);
-    ta.focus();
-    ta.select();
-    const save = () => {
-      const newDetails = ta.value.trim();
-      // Update in TRAVEL
+    const card = btn.closest('.entry-card');
+    if (card.querySelector('.entry-edit-panel')) return; // already open
+
+    const panel = document.createElement('div');
+    panel.className = 'entry-edit-panel';
+    panel.innerHTML = `
+      <label style="font-size:0.75rem;color:var(--text3)">City</label>
+      <input class="entry-edit-city" type="text" value="${city}" placeholder="City name">
+      <label style="font-size:0.75rem;color:var(--text3);margin-top:6px">Description</label>
+      <textarea class="entry-details-input" rows="3">${current}</textarea>
+      <button class="entry-edit-save-btn">Save</button>
+    `;
+    card.appendChild(panel);
+    panel.querySelector('.entry-edit-city').focus();
+
+    panel.querySelector('.entry-edit-save-btn').addEventListener('click', () => {
+      const newCity = panel.querySelector('.entry-edit-city').value.trim() || city;
+      const newDetails = panel.querySelector('textarea').value.trim();
+
+      // Remove from old city in TRAVEL
       const countryObj = TRAVEL[country];
       if (countryObj) {
         for (const c of countryObj.cities) {
-          if (!city || c.name === city) {
-            const entries = c.categories[category] || [];
-            const entry = entries.find(e => e.name === name);
-            if (entry) { entry.details = newDetails; break; }
+          if (c.name === city) {
+            const arr = c.categories[category] || [];
+            const idx = arr.findIndex(e => e.name === name);
+            if (idx !== -1) arr.splice(idx, 1);
+            break;
           }
         }
       }
-      // Update in user entries
+      // Insert into new city
+      _insertIntoTravel({ name, country, city: newCity, category, details: newDetails });
+
+      // Update user entries
       const userEntries = getUserEntries();
       const ue = userEntries.find(e => e.name === name && e.country === country);
-      if (ue) ue.details = newDetails;
+      if (ue) { ue.city = newCity; ue.details = newDetails; }
       localStorage.setItem(USER_ENTRIES_KEY, JSON.stringify(userEntries));
       fetch('/api/entries-put', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ entries: userEntries }) }).catch(() => {});
-      // Re-render
       showCountry(country);
-    };
-    ta.addEventListener('blur', save);
-    ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ta.blur(); } });
+    });
   }
 
   // ── PWA Service Worker ────────────────────────────────────────────────────
