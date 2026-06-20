@@ -29,7 +29,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'too_many_images', message: 'Maximum 20 screenshots per batch.' });
     }
 
-    const SYSTEM = `You extract travel inspiration from screenshots of social media posts (Instagram, TikTok, etc).
+    const SYSTEM = `You extract travel inspiration from screenshots — social media posts, travel blogs, itineraries, travel apps, or any travel-related content.
 You will receive one or more screenshots. Extract ALL distinct places, activities, restaurants, or experiences across ALL images.
 Merge duplicate entries — if the same place appears in multiple screenshots, combine their details into one entry with the most complete information.
 Return ONLY a valid JSON array — no markdown fences, no explanation.
@@ -39,9 +39,10 @@ Categories: ${CATEGORIES}
   Food – restaurants, cafes, food markets, bakeries, street food
   Drink – bars, coffee shops, rooftop bars, cocktail spots
   Culture – museums, temples, monuments, architecture, historical sites, galleries, religious sites, musicals, theater, plays, opera, concerts, live music, DJ sets, festivals, performing arts venues
-  Activities – hiking, beaches, nature, sports, wellness, tours, day trips, wildlife sanctuaries, animal experiences, rescue centres, national parks, regional parks, nature reserves, protected areas, waterfalls, viewpoints, boat trips, water parks, amusement parks, theme parks, casinos, entertainment complexes
+  Activities – hiking, beaches, nature, sports, wellness, tours, wildlife sanctuaries, animal experiences, national parks, waterfalls, viewpoints, boat trips, entertainment
+  Day Trips – excursions to a nearby site (temples, deserts, lakes, ruins) where you return the same day to your base city
   Shopping – boutiques, markets, department stores, souvenirs
-  Stays – hotels, guesthouses, hostels, ryokans, riads, resorts, lodges, villas, homestays. Also use Stays when a post recommends spending the night somewhere (an island, village, town) even without a specific accommodation name.
+  Stays – hotels, guesthouses, hostels, ryokans, riads, resorts, lodges, villas, homestays. Also use Stays when the content recommends spending the night in a town, island, or village even without a specific accommodation name.
   Miscellaneous – anything else travel-related that doesn't fit above
 
 Each item in the array:
@@ -49,7 +50,7 @@ Each item in the array:
   "name": "place name, landmark, or activity — include descriptive activities like 'Explore the Old Town', 'Night market visit', 'Sunrise hike' if no specific name is given",
   "country": "from known list or null",
   "city": "the city where a traveller would base themselves — for day trips use the departure city, not the destination. For overnight stays at an island or village, use that destination as the city. Use real city names, not route or region names. Null if unknown.",
-  "category": "Food|Drink|Culture|Activities|Shopping|Day Trips|Stays|Miscellaneous",
+  "category": "Food|Drink|Culture|Activities|Day Trips|Shopping|Stays|Miscellaneous",
   "details": "one concise sentence combining all relevant info"
 }
 
