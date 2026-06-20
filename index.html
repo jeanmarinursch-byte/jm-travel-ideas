@@ -2243,11 +2243,18 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
       const isCulture = cat === 'Culture';
       const isLgbtq = _lgbtqRe.test(e.name) || _lgbtqRe.test(e.details || '');
       const prideFlag = isLgbtq ? ' <span title="LGBTQ+ venue">🏳️‍🌈</span>' : '';
+      const isAdmin = _session?.role === 'admin';
       card.innerHTML = `
-        <div class="entry-name">${e.name}${prideFlag}${_session?.role === 'admin' ? `<button class="entry-delete-btn" onclick="deleteEntry(${JSON.stringify(currentCountry)}, ${JSON.stringify(currentCity || '')}, ${JSON.stringify(cat)}, ${JSON.stringify(e.name)})" title="Delete entry">✕</button>` : ''}</div>
-        ${e.details ? `<div class="entry-details"><span class="entry-details-text">${e.details}</span>${_session?.role === 'admin' ? `<button class="entry-edit-btn" onclick="editEntryDetails(this, ${JSON.stringify(currentCountry)}, ${JSON.stringify(currentCity || '')}, ${JSON.stringify(cat)}, ${JSON.stringify(e.name)}, ${JSON.stringify(e.details)})">✏️</button>` : ''}</div>` : ''}
+        <div class="entry-name">${e.name}${prideFlag}${isAdmin ? `<button class="entry-delete-btn" title="Delete entry">✕</button>` : ''}</div>
+        ${e.details ? `<div class="entry-details"><span class="entry-details-text">${e.details}</span>${isAdmin ? `<button class="entry-edit-btn">✏️</button>` : ''}</div>` : ''}
         ${isCulture ? `<button class="entry-hours-btn" onclick="fetchHours(this, ${JSON.stringify(e.name)}, ${JSON.stringify(currentCity || '')}, ${JSON.stringify(currentCountry || '')})">🕐 Check opening hours</button>` : ''}
         <div class="entry-hours" style="display:none"></div>`;
+      if (isAdmin) {
+        const delBtn = card.querySelector('.entry-delete-btn');
+        if (delBtn) delBtn.addEventListener('click', () => deleteEntry(currentCountry, currentCity || '', cat, e.name));
+        const editBtn = card.querySelector('.entry-edit-btn');
+        if (editBtn) editBtn.addEventListener('click', () => editEntryDetails(editBtn, currentCountry, currentCity || '', cat, e.name, e.details));
+      }
       list.appendChild(card);
     });
 
