@@ -238,6 +238,7 @@ Categories: ${CATEGORIES}
   Culture – museums, temples, monuments, architecture, historical sites, galleries, religious sites, musicals, theater, plays, opera, concerts, live music, DJ sets, festivals, performing arts venues
   Activities – hiking, beaches, nature, sports, wellness, tours, day trips, wildlife sanctuaries, animal experiences, rescue centres, national parks, regional parks, nature reserves, protected areas, waterfalls, viewpoints, boat trips, water parks, amusement parks, theme parks, casinos, entertainment complexes
   Shopping – boutiques, markets, department stores, souvenirs
+  Stays – hotels, guesthouses, hostels, resorts, lodges, villas, homestays, riads, ryokans — anything the blog recommends sleeping at
   Miscellaneous – anything else travel-related
 
 Each item:
