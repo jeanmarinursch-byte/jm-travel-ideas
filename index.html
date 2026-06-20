@@ -2677,12 +2677,16 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
   }
 
   function _namesMatch(a, b) {
-    const words = s => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 2);
+    const norm = s => s.toLowerCase().replace(/[^a-z0-9\s]/g, '');
+    // If both names end in different numbers, they are distinct entries
+    const numA = norm(a).match(/\b(\d+)\s*$/)?.[1];
+    const numB = norm(b).match(/\b(\d+)\s*$/)?.[1];
+    if (numA && numB && numA !== numB) return false;
+    const words = s => norm(s).split(/\s+/).filter(w => w.length > 2);
     const wa = new Set(words(a));
     const wb = words(b);
     if (wa.size === 0 || wb.length === 0) return false;
     const shared = wb.filter(w => wa.has(w)).length;
-    // Match if >50% of the shorter name's words are shared
     return shared / Math.min(wa.size, wb.length) >= 0.6;
   }
 
