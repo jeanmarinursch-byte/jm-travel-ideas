@@ -161,43 +161,32 @@ Return ONLY the deduplicated JSON array — no markdown, no explanation.`;
       }
     }
 
-    const page = await fetch(url, {
+    const fetchUrl = isSocial ? url : `https://r.jina.ai/${url}`;
+    const page = await fetch(fetchUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        'Accept': 'text/html,text/plain,*/*'
       },
       redirect: 'follow'
     }).catch(() => { fetchFailed = true; return null; });
 
     if (page && page.ok) {
-      const html = await page.text();
-      const get = (pattern) => html.match(pattern)?.[1]?.trim() || '';
-      const title       = get(/property="og:title"\s+content="([^"]+)"/i)
-                       || get(/content="([^"]+)"\s+property="og:title"/i)
-                       || get(/<title>([^<]+)<\/title>/i);
-      const description = get(/property="og:description"\s+content="([^"]+)"/i)
-                       || get(/content="([^"]+)"\s+property="og:description"/i)
-                       || get(/name="description"\s+content="([^"]+)"/i);
-      const siteName    = get(/property="og:site_name"\s+content="([^"]+)"/i);
-      if (title)       { content += `Title: ${title}\n`; contentFields++; }
-      if (description) { content += `Description: ${description}\n`; contentFields++; }
-      if (siteName)    { content += `Site: ${siteName}\n`; contentFields++; }
-
-      // For non-social URLs (blogs, journals), extract readable body text
-      if (!isSocial) {
-        const bodyText = html
-          .replace(/<script[\s\S]*?<\/script>/gi, '')
-          .replace(/<style[\s\S]*?<\/style>/gi, '')
-          .replace(/<nav[\s\S]*?<\/nav>/gi, '')
-          .replace(/<header[\s\S]*?<\/header>/gi, '')
-          .replace(/<footer[\s\S]*?<\/footer>/gi, '')
-          .replace(/<[^>]+>/g, ' ')
-          .replace(/\s{2,}/g, ' ')
-          .trim();
-        // Take first ~4000 words to stay within token budget
-        const words = bodyText.split(' ');
-        const excerpt = words.slice(0, 4000).join(' ');
+      const text = await page.text();
+      if (isSocial) {
+        const get = (pattern) => text.match(pattern)?.[1]?.trim() || '';
+        const title       = get(/property="og:title"\s+content="([^"]+)"/i)
+                         || get(/content="([^"]+)"\s+property="og:title"/i)
+                         || get(/<title>([^<]+)<\/title>/i);
+        const description = get(/property="og:description"\s+content="([^"]+)"/i)
+                         || get(/content="([^"]+)"\s+property="og:description"/i)
+                         || get(/name="description"\s+content="([^"]+)"/i);
+        const siteName    = get(/property="og:site_name"\s+content="([^"]+)"/i);
+        if (title)       { content += `Title: ${title}\n`; contentFields++; }
+        if (description) { content += `Description: ${description}\n`; contentFields++; }
+        if (siteName)    { content += `Site: ${siteName}\n`; contentFields++; }
+      } else {
+        // Jina Reader returns clean markdown text
+        const excerpt = text.slice(0, 16000);
         if (excerpt.length > 200) {
           content += `\nPage content:\n${excerpt}\n`;
           contentFields++;
@@ -206,7 +195,7 @@ Return ONLY the deduplicated JSON array — no markdown, no explanation.`;
     } else if (page && !page.ok) {
       return res.status(422).json({
         error: 'url_blocked',
-        message: `This link is blocked by ${new URL(url).hostname} (${page.status}). Try uploading a screenshot instead.`
+        message: `Could not read this URL (${page.status}). Try uploading a screenshot instead.`
       });
     } else if (fetchFailed) {
       return res.status(422).json({
