@@ -2799,9 +2799,17 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
   }
 
   // ── Core: insert one entry into TRAVEL (no persistence) ─────────────────
+  const CITY_CORRECTIONS = {
+    'champasak': 'Pakse', 'champasak province': 'Pakse', 'bolaven plateau': 'Pakse',
+    'thakhek loop': 'Thakhek', 'vang vieng loop': 'Vang Vieng',
+  };
+  function _normalizeCity(city) {
+    return CITY_CORRECTIONS[city.toLowerCase().trim()] || city;
+  }
+
   function _insertIntoTravel(item) {
     const country  = (item.country || '').trim();
-    const city     = (item.city    || 'General').trim();
+    const city     = _normalizeCity((item.city || 'General').trim());
     const category = item.category || 'Miscellaneous';
     const entry    = { name: item.name || '—', details: item.details || '' };
 
