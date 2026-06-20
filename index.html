@@ -1132,6 +1132,20 @@ function migrateInbox() {
   } catch (_) {}
 }
 
+function _namesMatch(a, b) {
+  const norm = s => s.toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s*\d+\s*$/, '')
+    .trim();
+  const stem = w => w.replace(/s$/, '');
+  const words = s => norm(s).split(/\s+/).filter(w => w.length > 2).map(stem);
+  const wa = new Set(words(a));
+  const wb = words(b);
+  if (wa.size === 0 || wb.length === 0) return false;
+  const shared = wb.filter(w => wa.has(w)).length;
+  return shared / Math.min(wa.size, wb.length) >= 0.6;
+}
+
 function deduplicateTravel() {
   Object.values(TRAVEL).forEach(country => {
     country.cities.forEach(city => {
@@ -2693,20 +2707,6 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
     if (btn) btn.disabled = false;
   }
 
-  function _namesMatch(a, b) {
-    // Normalize: lowercase, strip punctuation, strip trailing numbers, stem plurals
-    const norm = s => s.toLowerCase()
-      .replace(/[^a-z0-9\s]/g, '')
-      .replace(/\s*\d+\s*$/, '')
-      .trim();
-    const stem = w => w.replace(/s$/, '');
-    const words = s => norm(s).split(/\s+/).filter(w => w.length > 2).map(stem);
-    const wa = new Set(words(a));
-    const wb = words(b);
-    if (wa.size === 0 || wb.length === 0) return false;
-    const shared = wb.filter(w => wa.has(w)).length;
-    return shared / Math.min(wa.size, wb.length) >= 0.6;
-  }
 
   // ── Core: insert one entry into TRAVEL (no persistence) ─────────────────
   function _insertIntoTravel(item) {
