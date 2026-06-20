@@ -1156,9 +1156,11 @@ async function checkPassword() {
       document.getElementById('app').style.display = 'block';
       if (data.role === 'admin') {
         migrateInbox();
+        mergeUserEntries();
         deduplicateTravel();
+      } else {
+        mergeUserEntries();
       }
-      mergeUserEntries();
       showHome();
       syncEntriesFromServer(data.role === 'admin');
     } else {
