@@ -24,6 +24,7 @@ export default async function handler(req, res) {
       access: 'private',
       contentType: 'application/json',
       addRandomSuffix: false,
+      allowOverwrite: true,
     });
     return res.status(200).json({ ok: true });
   } catch (e) {
