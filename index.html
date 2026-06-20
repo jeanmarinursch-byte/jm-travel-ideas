@@ -2694,12 +2694,13 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
   }
 
   function _namesMatch(a, b) {
-    const norm = s => s.toLowerCase().replace(/[^a-z0-9\s]/g, '');
-    // If both names end in different numbers, they are distinct entries
-    const numA = norm(a).match(/\b(\d+)\s*$/)?.[1];
-    const numB = norm(b).match(/\b(\d+)\s*$/)?.[1];
-    if (numA && numB && numA !== numB) return false;
-    const words = s => norm(s).split(/\s+/).filter(w => w.length > 2);
+    // Normalize: lowercase, strip punctuation, strip trailing numbers, stem plurals
+    const norm = s => s.toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .replace(/\s*\d+\s*$/, '')
+      .trim();
+    const stem = w => w.replace(/s$/, '');
+    const words = s => norm(s).split(/\s+/).filter(w => w.length > 2).map(stem);
     const wa = new Set(words(a));
     const wb = words(b);
     if (wa.size === 0 || wb.length === 0) return false;
@@ -2726,8 +2727,13 @@ function showCategories(country, cityName, categories, isHomeDest=false) {
 
     const existing = cityObj.categories[category].find(e => _namesMatch(e.name, entry.name));
     if (existing) {
-      const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-      if (entry.details && norm(entry.details) !== norm(existing.details)) {
+      // Use the cleaner name (strip trailing number, prefer shorter)
+      const cleanName = n => n.replace(/\s*\d+\s*$/, '').trim();
+      const cleanA = cleanName(existing.name), cleanB = cleanName(entry.name);
+      if (cleanA === cleanB && cleanA !== existing.name) existing.name = cleanA;
+      // Merge details if different
+      const normD = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (entry.details && normD(entry.details) !== normD(existing.details)) {
         existing.details = [existing.details, entry.details].filter(Boolean).join(' · ');
       }
     } else {
