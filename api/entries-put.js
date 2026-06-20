@@ -15,8 +15,7 @@ export default async function handler(req, res) {
     await put('travel-entries.json', JSON.stringify(entries), {
       access: 'public',
       contentType: 'application/json',
-      allowOverwrite: true,
-      token
+      addRandomSuffix: false,
     });
     return res.status(200).json({ ok: true });
   } catch (e) {

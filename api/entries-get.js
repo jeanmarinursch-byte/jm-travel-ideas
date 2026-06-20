@@ -6,10 +6,8 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const token = process.env.BLOB_READ_WRITE_TOKEN;
-
   try {
-    const { blobs } = await list({ prefix: 'travel-entries.json', token });
+    const { blobs } = await list({ prefix: 'travel-entries.json' });
     if (!blobs.length) return res.status(200).json({ entries: [] });
 
     const dataRes = await fetch(blobs[0].url);
