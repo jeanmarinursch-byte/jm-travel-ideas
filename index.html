@@ -1139,13 +1139,10 @@ async function syncEntriesFromServer(isAdmin) {
       if (serverChanged) {
         fetch('/api/entries-put', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ entries: serverEntries }) }).catch(() => {});
       }
-      // Insert any server entries not already in TRAVEL (from the hardcoded base)
-      const localNames = new Set(localEntries.map(e => e.name?.toLowerCase().trim()));
-      const newFromServer = serverEntries.filter(e => !localNames.has(e.name?.toLowerCase().trim()));
-      if (newFromServer.length > 0) {
-        newFromServer.forEach(item => _insertIntoTravel(item));
-        buildHome();
-      }
+      // Insert server entries and dedup — always run for both admin and guest
+      serverEntries.forEach(item => _insertIntoTravel(item));
+      deduplicateTravel();
+      buildHome();
     }
   } catch (_) {}
 }
@@ -1259,7 +1256,6 @@ async function checkPassword() {
         migrateInbox();
         fixBadCityNames();
         mergeUserEntries();
-        deduplicateTravel();
       } else {
         fixBadCityNames();
         mergeUserEntries();
