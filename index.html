@@ -1102,45 +1102,39 @@ async function syncEntriesFromServer(isAdmin) {
     const serverEntries = data.entries || [];
     const localEntries = getUserEntries();
 
-    // Push: if admin, upload any local entries not yet on server (first-time bootstrap)
+    // Determine the full set of entries to display
+    let effectiveEntries = serverEntries;
+
+    // Push: if admin, upload any local entries not yet on server — but don't return early
     if (isAdmin && localEntries.length > 0) {
       const serverNames = new Set(serverEntries.map(e => e.name?.toLowerCase().trim()));
       const newFromLocal = localEntries.filter(e => !serverNames.has(e.name?.toLowerCase().trim()));
       if (newFromLocal.length > 0) {
-        const allEntries = [...serverEntries, ...newFromLocal];
+        effectiveEntries = [...serverEntries, ...newFromLocal];
         fetch('/api/entries-put', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ entries: allEntries })
+          body: JSON.stringify({ entries: effectiveEntries })
         }).catch(() => {});
-        // Update local to match what we just pushed
-        localStorage.setItem(USER_ENTRIES_KEY, JSON.stringify(allEntries));
-        newFromLocal.forEach(item => _insertIntoTravel(item));
-        buildHome();
-        return;
       }
     }
 
-    // Pull: server is the source of truth — replace local with server entries
-    if (serverEntries.length > 0) {
-      // Normalize city names on server entries before saving
-      const CITY_MAP = {
-        'thakhek loop': 'Thakhek', 'vang vieng loop': 'Vang Vieng',
-      };
+    if (effectiveEntries.length > 0) {
+      // Normalize city names
+      const CITY_MAP = { 'thakhek loop': 'Thakhek', 'vang vieng loop': 'Vang Vieng' };
       let serverChanged = false;
-      serverEntries.forEach(e => {
+      effectiveEntries.forEach(e => {
         if (e.city) {
           const corrected = CITY_MAP[e.city.toLowerCase().trim()];
           if (corrected) { e.city = corrected; serverChanged = true; }
         }
       });
-      localStorage.setItem(USER_ENTRIES_KEY, JSON.stringify(serverEntries));
-      // Push corrected data back to server if any cities were fixed
+      localStorage.setItem(USER_ENTRIES_KEY, JSON.stringify(effectiveEntries));
       if (serverChanged) {
-        fetch('/api/entries-put', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ entries: serverEntries }) }).catch(() => {});
+        fetch('/api/entries-put', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ entries: effectiveEntries }) }).catch(() => {});
       }
-      // Insert server entries and dedup — always run for both admin and guest
-      serverEntries.forEach(item => _insertIntoTravel(item));
+      // Insert all entries and dedup — same path for both admin and guest
+      effectiveEntries.forEach(item => _insertIntoTravel(item));
       deduplicateTravel();
       buildHome();
     }
