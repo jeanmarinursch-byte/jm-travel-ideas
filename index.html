@@ -1249,10 +1249,8 @@ async function checkPassword() {
       if (data.role === 'admin') {
         migrateInbox();
         fixBadCityNames();
-        mergeUserEntries();
       } else {
         fixBadCityNames();
-        mergeUserEntries();
       }
       showHome();
       syncEntriesFromServer(data.role === 'admin');
