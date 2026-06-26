@@ -637,6 +637,25 @@
   /* ── COUNTRY HEADER (centered, flags both sides) ── */
   #country-top-area { position: relative; }
   #country-top-area.has-banner { min-height: 220px; display: flex; align-items: center; justify-content: center; }
+  #laos-banner {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    z-index: 0;
+  }
+  #laos-banner .laos-bg {
+    position: absolute;
+    inset: -4px;
+    background-image: url('/assets/laos-banner.jpg');
+    background-size: cover;
+    background-position: center 25%;
+    filter: grayscale(100%) sepia(80%) hue-rotate(88deg) saturate(220%) blur(2.5px);
+  }
+  #laos-banner .laos-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(11, 22, 13, 0.82);
+  }
   #uzbekistan-banner {
     position: absolute;
     inset: 0;
@@ -1023,6 +1042,10 @@
       <div id="uzbekistan-banner" style="display:none">
         <div class="uzb-bg"></div>
         <div class="uzb-overlay"></div>
+      </div>
+      <div id="laos-banner" style="display:none">
+        <div class="laos-bg"></div>
+        <div class="laos-overlay"></div>
       </div>
       <div class="country-header-centered">
         <div class="c-flag-side" id="c-flag-left"></div>
@@ -1644,8 +1667,9 @@ function showCountry(country) {
   const d = TRAVEL[country];
   const n = countryEntries(country);
 
-  const hasBanner = country === 'Uzbekistan';
-  document.getElementById('uzbekistan-banner').style.display = hasBanner ? 'block' : 'none';
+  const hasBanner = country === 'Uzbekistan' || country === 'Laos';
+  document.getElementById('uzbekistan-banner').style.display = country === 'Uzbekistan' ? 'block' : 'none';
+  document.getElementById('laos-banner').style.display = country === 'Laos' ? 'block' : 'none';
   document.getElementById('country-top-area').classList.toggle('has-banner', hasBanner);
   document.getElementById('c-flag-left').textContent = d.flag;
   document.getElementById('c-flag-right').textContent = d.flag;
