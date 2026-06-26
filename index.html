@@ -635,11 +635,12 @@
 
 
   /* ── COUNTRY HEADER (centered, flags both sides) ── */
+  #country-top-area { position: relative; }
   #uzbekistan-banner {
-    position: relative;
-    width: 100%;
-    height: 200px;
+    position: absolute;
+    inset: 0;
     overflow: hidden;
+    z-index: 0;
   }
   #uzbekistan-banner .uzb-bg {
     position: absolute;
@@ -647,12 +648,16 @@
     background-image: url('/assets/uzbekistan-banner.jpg');
     background-size: cover;
     background-position: center 35%;
-    filter: blur(2px) saturate(0.6);
+    filter: grayscale(100%) sepia(80%) hue-rotate(88deg) saturate(220%) blur(1.5px);
   }
   #uzbekistan-banner .uzb-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(11, 22, 13, 0.58);
+    background: rgba(11, 22, 13, 0.52);
+  }
+  #country-top-area .country-header-centered {
+    position: relative;
+    z-index: 1;
   }
 
   .country-header-centered {
@@ -1009,19 +1014,21 @@
 
   <!-- COUNTRY VIEW -->
   <div class="view" id="view-country">
-    <div id="uzbekistan-banner" style="display:none">
-      <div class="uzb-bg"></div>
-      <div class="uzb-overlay"></div>
-    </div>
-    <div class="country-header-centered">
-      <div class="c-flag-side" id="c-flag-left"></div>
-      <div class="c-title-wrap">
-        <div class="page-title-row">
-          <span class="page-title-lg" id="c-name"></span>
-          <span class="page-subtitle-inline" id="c-subtitle"></span>
-        </div>
+    <div id="country-top-area">
+      <div id="uzbekistan-banner" style="display:none">
+        <div class="uzb-bg"></div>
+        <div class="uzb-overlay"></div>
       </div>
-      <div class="c-flag-side" id="c-flag-right"></div>
+      <div class="country-header-centered">
+        <div class="c-flag-side" id="c-flag-left"></div>
+        <div class="c-title-wrap">
+          <div class="page-title-row">
+            <span class="page-title-lg" id="c-name"></span>
+            <span class="page-subtitle-inline" id="c-subtitle"></span>
+          </div>
+        </div>
+        <div class="c-flag-side" id="c-flag-right"></div>
+      </div>
     </div>
     <div class="copper-line"></div>
     <!-- L’APERÇU -->
