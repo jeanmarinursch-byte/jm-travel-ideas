@@ -635,7 +635,8 @@
 
 
   /* ── COUNTRY HEADER (centered, flags both sides) ── */
-  #country-top-area { position: relative; min-height: 280px; display: flex; align-items: center; justify-content: center; }
+  #country-top-area { position: relative; }
+  #country-top-area.has-banner { min-height: 280px; display: flex; align-items: center; justify-content: center; }
   #uzbekistan-banner {
     position: absolute;
     inset: 0;
@@ -1643,7 +1644,9 @@ function showCountry(country) {
   const d = TRAVEL[country];
   const n = countryEntries(country);
 
-  document.getElementById('uzbekistan-banner').style.display = country === 'Uzbekistan' ? 'block' : 'none';
+  const hasBanner = country === 'Uzbekistan';
+  document.getElementById('uzbekistan-banner').style.display = hasBanner ? 'block' : 'none';
+  document.getElementById('country-top-area').classList.toggle('has-banner', hasBanner);
   document.getElementById('c-flag-left').textContent = d.flag;
   document.getElementById('c-flag-right').textContent = d.flag;
   document.getElementById('c-name').textContent = country;
