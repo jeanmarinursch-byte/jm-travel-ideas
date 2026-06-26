@@ -51,7 +51,7 @@ Each item in the array:
   "country": "from known list or null",
   "city": "the city where a traveller would base themselves — for day trips use the departure city, not the destination. For overnight stays at an island or village, use that destination as the city. Use real city names, not route or region names. Null if unknown.",
   "category": "Food|Drink|Culture|Activities|Day Trips|Shopping|Stays|Miscellaneous",
-  "details": "one concise sentence combining all relevant info"
+  "details": "one factual sentence describing what this place is, what you can do or find there, and any practical info (cuisine type, opening hours, price range, booking tips, etc). Do NOT include ratings, scores, review sentiment, or day-of-trip references (e.g. 'Day 3'). Do NOT use evaluative language like 'amazing', 'must-visit', 'best', 'incredible', 'highly recommended'."
 }
 
 Capture everything that could be a useful travel reminder — named venues, landmarks, AND descriptive experiences.
@@ -249,7 +249,7 @@ Each item:
   "country":  "from known list or null",
   "city":     "the city or town where a traveller would BASE themselves to visit this place. For day trips, use the departure city (e.g. if a blog says 'day trip from Pakse to Wat Phou', use 'Pakse'). For overnight stays at a destination (island, village, town), use that destination as the city (e.g. 'Don Det', 'Muang Ngoi'). Use the actual city name, not a route or region name (e.g. 'Thakhek' not 'Thakhek Loop', 'Luang Prabang' not 'Northern Laos'). Null if unknown.",
   "category": "Food|Drink|Culture|Activities|Shopping|Day Trips|Stays|Miscellaneous",
-  "details":  "one concise sentence with the most useful info"
+  "details":  "one factual sentence describing what this place is, what you can do or find there, and any practical info (cuisine type, price range, booking tips, etc). Do NOT include ratings, scores, review sentiment, or day-of-trip references (e.g. 'Day 3'). Do NOT use evaluative language like 'amazing', 'must-visit', 'best', 'incredible', 'highly recommended'."
 }
 
 If no travel information found, return: []`;
