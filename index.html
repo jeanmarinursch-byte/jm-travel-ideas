@@ -635,7 +635,7 @@
 
 
   /* ── COUNTRY HEADER (centered, flags both sides) ── */
-  #country-top-area { position: relative; min-height: 280px; }
+  #country-top-area { position: relative; min-height: 280px; display: flex; align-items: center; justify-content: center; }
   #uzbekistan-banner {
     position: absolute;
     inset: 0;
@@ -653,11 +653,15 @@
   #uzbekistan-banner .uzb-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(11, 22, 13, 0.52);
+    background: rgba(11, 22, 13, 0.78);
   }
   #country-top-area .country-header-centered {
     position: relative;
     z-index: 1;
+    width: 100%;
+  }
+  #country-top-area .page-title-lg {
+    font-size: 3rem;
   }
 
   .country-header-centered {
