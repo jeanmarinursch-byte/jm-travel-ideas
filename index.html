@@ -635,6 +635,26 @@
 
 
   /* ── COUNTRY HEADER (centered, flags both sides) ── */
+  #uzbekistan-banner {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+  }
+  #uzbekistan-banner .uzb-bg {
+    position: absolute;
+    inset: -4px;
+    background-image: url('/assets/uzbekistan-banner.jpg');
+    background-size: cover;
+    background-position: center 35%;
+    filter: blur(2px) saturate(0.6);
+  }
+  #uzbekistan-banner .uzb-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(11, 22, 13, 0.58);
+  }
+
   .country-header-centered {
     display: flex;
     align-items: center;
@@ -989,6 +1009,10 @@
 
   <!-- COUNTRY VIEW -->
   <div class="view" id="view-country">
+    <div id="uzbekistan-banner" style="display:none">
+      <div class="uzb-bg"></div>
+      <div class="uzb-overlay"></div>
+    </div>
     <div class="country-header-centered">
       <div class="c-flag-side" id="c-flag-left"></div>
       <div class="c-title-wrap">
@@ -1608,6 +1632,7 @@ function showCountry(country) {
   const d = TRAVEL[country];
   const n = countryEntries(country);
 
+  document.getElementById('uzbekistan-banner').style.display = country === 'Uzbekistan' ? 'block' : 'none';
   document.getElementById('c-flag-left').textContent = d.flag;
   document.getElementById('c-flag-right').textContent = d.flag;
   document.getElementById('c-name').textContent = country;
